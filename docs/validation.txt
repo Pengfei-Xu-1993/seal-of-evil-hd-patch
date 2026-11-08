@@ -1,5 +1,8 @@
 Seal of Evil HD Patch v0.22 validation summary
 
+Purpose and scope
+Windows 11 startup compatibility for the verified Steam build, with borderless fullscreen, 1080p/1440p (2K)/4K rendering options, and enhanced opening and main-menu artwork. The startup diagnosis identified the legacy 16-bit display-mode transition. Results below were checked on the development machine; other game builds and hardware configurations have not been verified.
+
 Build
 payload\dinput8.dll
 186880 bytes

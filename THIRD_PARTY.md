@@ -1,12 +1,14 @@
-Third-party component
+# Third-Party Components and Artwork
 
-dgVoodoo 2.87.6 by Dege
-The package includes the unmodified x86 D3D8.dll, DDraw.dll and D3DImm.dll from the official release.
+## dgVoodoo
 
-Official release
-https://github.com/dege-diosg/dgVoodoo2/releases/tag/2.87.6
+dgVoodoo 2.87.6 is developed by Dege. The installation package includes the unmodified x86 `D3D8.dll`, `DDraw.dll`, and `D3DImm.dll` from the official release.
 
-Documentation
-https://dege.freeweb.hu/dgVoodoo2/ReadmeGeneral/
+- [Official dgVoodoo 2.87.6 release](https://github.com/dege-diosg/dgVoodoo2/releases/tag/2.87.6)
+- [dgVoodoo documentation](https://dege.freeweb.hu/dgVoodoo2/ReadmeGeneral/)
 
-The game artwork and original game components belong to their respective rights holders. The remastered artwork in this package was prepared from the user's local Seal of Evil assets for the requested patch.
+## Game assets and brands
+
+Original *Seal of Evil* artwork, game components, names, and brand marks belong to their respective rights holders. The enhanced artwork was prepared from local game references for this patch using ImageGen and subsequent 4K export processing.
+
+See [AI_DISCLOSURE.md](AI_DISCLOSURE.md) for development attribution, generated-image dimensions, and testing scope. The [provenance directory](provenance/) records artwork prompts and exported asset hashes. Original game executables and user saves are not included in the release package.
