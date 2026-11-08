@@ -1,0 +1,4 @@
+# Keep the verified sources and PowerShell 5.1 BOMs byte-for-byte.
+source/* -text
+packaging/* -text
+config/* -text

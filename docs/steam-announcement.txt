@@ -1,0 +1,36 @@
+Title: Seal of Evil HD Patch v0.22: Codex-made fullscreen and 1080p/1440p/4K options
+
+Body:
+Implementation and development: OpenAI Codex. The publisher only reviewed the work and did not write the code.
+
+I am sharing v0.22 for the Steam edition of Seal of Evil (App 1726410).
+
+[b]Features[/b]
+- Startup compatibility without Windows compatibility mode or a forced 640x480 desktop; borderless fullscreen via dgVoodoo 2.87.6's Direct3D 11 path.
+- Five in-game render resolutions: 800x600, 1024x768, 1920x1080, 2560x1440 and 3840x2160. Left/right selection, OK to apply/save, Cancel to retain the current setting. Default: 1080p.
+- Mapped mouse coordinates and centered ESC, Options and Load Game dialogs; short-click handling for low frame rates.
+- AI-enhanced widescreen menu, with original central details as preservation targets, restrained side extensions, removal of the demo label, and a local animated campfire effect.
+- Enhanced opening title and three brand cards, about 19.167 seconds total for the cards; Esc, Space or a click skips them while the game keeps foreground ownership.
+- Installer backups, upgrade migration and uninstall restoration.
+
+[b]Artwork and performance[/b]
+The five PNGs are 3840x2160 exports. ImageGen edited reference artwork at 1672x941 (1671x941 for the title), followed by high-quality bicubic resampling to 4K. These are not native 4K generation outputs. Prompts and provenance are in the repository. Original game artwork, logos and third-party components retain their respective owners.
+
+4K can be demanding: about 13 FPS with Options open was observed on the development machine, versus about 39.5 FPS at 1080p with Options closed. Different UI states mean this is not a controlled comparison. Start at the default 1080p.
+
+[b]What was actually tested[/b]
+Codex performed the recorded tests. v0.22 passed Steam main-menu startup, Shift+Tab overlay opening/closing and menu input after returning. Steam recorded exit code 0, with no related new crash events/dumps in the audit window; the exit initiator is unknown.
+
+World resolution/input evidence is from v0.21 direct launch: same-process 4K -> 1440p -> 1080p changes, saved settings/restart persistence, movement, centered ESC, Cancel and 20 ms clicks. v0.22 retains those paths; a separate Steam-launched world test has not been performed. v0.22's title/cards, intro skip, sustained menu display, Options and Load Game were checked. PowerShell 5.1 isolated install/upgrade/uninstall tests passed.
+
+DLSS and optical-flow/frame-generation enhancements are not included in v0.22.
+
+[b]Download and install[/b]
+[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.22]Download SealHD_v0.22.zip[/url], not GitHub's automatic Source code ZIP. Exit the game, extract the complete package, run Install.cmd, then launch through Steam.
+
+The installer does not auto-detect Steam libraries. For another location, run this from the extracted folder, replacing the path:
+[code].\Install.cmd -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil"[/code]
+
+The installer checks the supported original game hashes. See the README for those hashes, changing the initial resolution, uninstall commands and backup behavior.
+
+[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch]Public source, README, uninstall instructions and validation details[/url]

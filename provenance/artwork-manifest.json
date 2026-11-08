@@ -1,0 +1,42 @@
+[
+  {
+    "File": "intro-object.png",
+    "Width": 3840,
+    "Height": 2160,
+    "GeneratedOriginalWidth": 1672,
+    "GeneratedOriginalHeight": 941,
+    "SHA256": "E2D08C664274CFD9E972D18DBD2F63658224759BAD0CBBC850A276923A8FD332"
+  },
+  {
+    "File": "intro-strategy.png",
+    "Width": 3840,
+    "Height": 2160,
+    "GeneratedOriginalWidth": 1672,
+    "GeneratedOriginalHeight": 941,
+    "SHA256": "59BD3D4E96C58EDEBAC68305469A430762A51FECA79A7F2E8C565F8175BF137B"
+  },
+  {
+    "File": "intro-zoom.png",
+    "Width": 3840,
+    "Height": 2160,
+    "GeneratedOriginalWidth": 1672,
+    "GeneratedOriginalHeight": 941,
+    "SHA256": "B1598562847EF64ABDFA5BD15427F4E6A95F229A87F77AEBE52B3B35FB74DAA6"
+  },
+  {
+    "File": "mainmenu.png",
+    "Width": 3840,
+    "Height": 2160,
+    "GeneratedOriginalWidth": 1672,
+    "GeneratedOriginalHeight": 941,
+    "SHA256": "6202F4A7BC7FD0A53D5A16E93BA08DB73BFF154E5C9FF3E10C52B1C2CB436F24"
+  },
+  {
+    "File": "opening-title.png",
+    "Width": 3840,
+    "Height": 2160,
+    "GeneratedOriginalWidth": 1671,
+    "GeneratedOriginalHeight": 941,
+    "SHA256": "786CB2CF671F3DF22DBB0D2CAE5D841367110A18C8DC8B12433B8F1FAE3EA563"
+  }
+]

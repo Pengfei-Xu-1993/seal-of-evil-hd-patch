@@ -1,0 +1,52 @@
+Seal of Evil HD Patch v0.22 validation summary
+
+Build
+payload\dinput8.dll
+186880 bytes
+SHA256 3F921349A94ADC578316C5C6F235B8480E905B3104CB512E876D9CF9546AE2A3
+Default display 1920×1080, ProfileIndex 2, borderless fullscreen.
+
+Runtime evidence
+v0.21 verified same-process 3840×2160 → 2560×1440 → 1920×1080 buffer resets and persisted selections. The five option labels, directional selection, Cancel behavior and restart persistence were exercised. Actual 20 ms clicks triggered Options, previous/next resolution and Cancel, with recovered-click counters in the run log. New Game entered the story flow.
+v0.22 verified the enhanced opening title and all three brand cards at a foreground output size of 2560×1600. The card textures are 3840×2160. Each card returned DrawImage=0 and BitBlt=1, while the game owner remained enabled and normally displayed with foreground ownership.
+2026-11-07 18:21:52.401 America/New_York, HD intro skipped through owner key 27 (Esc).
+2026-11-07 18:21:53.096 America/New_York, the logical menu backbuffer returned to 800×600 after a successful reset.
+2026-11-07 18:23:02.292 America/New_York, the menu compositor reached 4200 frames at a 2560×1600 output.
+Final Options showed 1920×1080 and Windowed Mode Off. Load Game displayed both existing source saves and Cancel worked.
+During the earlier direct-launch check, the final process handle was opened before exit and reported ExitCode 0. That process completed through the normal game exit flow.
+
+Steam v0.22 main-menu check
+2026-11-07 19:04:20 America/New_York, Steam tracked the v0.22 game process for AppID 1726410. The loaded DLL hash matched the build listed above.
+2026-11-07 19:06:12 America/New_York, the overlay renderer recorded Showing. A live Shift+Tab screen check showed the complete overlay.
+2026-11-07 19:06:47 America/New_York, the overlay renderer recorded Hiding.
+2026-11-07 19:06:53.417 America/New_York, Options opened at profile 2, 1920×1080.
+2026-11-07 19:06:54.927 America/New_York, the next-resolution action selected profile 3, 2560×1440.
+2026-11-07 19:06:56.070 America/New_York, the previous-resolution action returned to profile 2, 1920×1080.
+2026-11-07 19:06:59 America/New_York, resources were released and the proxy detached.
+2026-11-07 19:07:01 America/New_York, Steam recorded process exit code 0. BugReport recorded its end marker. The action or actor that initiated this exit was not established by the available records.
+The audit window showed no related new Application Error/WER events or new SOE dump files. Original SOE.EXE, Gfx3d.dll and the installed v0.22 DLL hashes were rechecked.
+
+Evidence record names
+v021-native-fast-click-final-log.txt
+v022-foreground-zoom.png
+v022-foreground-object.png
+v022-foreground-strategy.png
+v022-skip-ui-exit-final-log.txt
+v022-options-final.png
+v022-load-final.png
+v022-exit-final.json
+v022-steam-final-startup
+v022-steam-exit-13068-audit
+
+Installer evidence
+Windows PowerShell 5.1 isolated entry-point tests passed 11-to-12 backup-record migration, repeated Install, and Uninstall. Original backup hashes and an unmanaged test progress file retained their hashes.
+
+Validation scope
+World resolution and input results come from v0.21. v0.22 changes the foreground ownership of the intro cards and retains those core paths.
+The v0.22 Steam check covered main-menu startup, overlay opening and closing, returned-menu input and process exit. World resolution and input evidence remains the v0.21 direct-launch testing. A separate Steam-launched world check has not been performed.
+
+Performance observations
+4K with Options open was observed at approximately 13 FPS. 1080p with Options closed was observed at approximately 39.5 FPS. The UI state differs between these observations.
+
+Artwork provenance
+All five game PNG exports are 3840×2160. ImageGen originals are 1672×941 for the three brand cards and main menu, and 1671×941 for the opening title. Exports use high-quality bicubic resampling. Prompts and asset hashes are in provenance.
