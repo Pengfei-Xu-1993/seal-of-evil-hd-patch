@@ -32,6 +32,7 @@ foreach ($relative in $paths) {
     $inputPath = Join-Path $base $relative
     if ($relative -eq 'dinput8.dll') { $inputPath = $ProxyDllPath }
     if ($relative -eq 'SealHD-bin/SealVideoProbe.exe') { $inputPath = $VideoProbePath }
+    if ($relative -eq 'dgVoodoo.conf') { $inputPath = Join-Path $PSScriptRoot '../config/dgVoodoo.conf' }
     $inputs[$relative] = Get-InputFile $inputPath
 }
 $output = [IO.Path]::GetFullPath($OutputPath)
@@ -46,10 +47,10 @@ foreach ($inputPath in @($inputs.Values) + @($testedManifestPath)) {
     }
 }
 
-# Reused wrapper, configuration and artwork bytes must match the tested base.
-# Rebuilt proxy/helper binaries intentionally receive their own fresh hashes.
+# Reused wrappers and artwork must match the tested base. The repository owns
+# the expanded wrapper resolution list; proxy/helper builds receive fresh hashes.
 foreach ($relative in $paths) {
-    if ($relative -in @('dinput8.dll', 'SealHD-bin/SealVideoProbe.exe')) { continue }
+    if ($relative -in @('dinput8.dll', 'SealHD-bin/SealVideoProbe.exe', 'dgVoodoo.conf')) { continue }
     $entry = @($tested.Files | Where-Object { $_.Path -eq $relative })
     if ($entry.Count -ne 1 -or (Get-FileHash -LiteralPath $inputs[$relative] -Algorithm SHA256).Hash -ne $entry[0].Sha256) {
         throw "The base release input does not match the tested payload: $relative"
@@ -68,7 +69,7 @@ try {
         [IO.File]::Copy($inputs[$relative], $destination, $false)
     }
     $manifest = [ordered]@{
-        Version = '0.25-local-portability-test'
+        Version = '0.26-resolution-candidate'
         Files = @($paths | ForEach-Object {
             [ordered]@{ Path = $_; Sha256 = (Get-FileHash -LiteralPath (Join-Path $stage $_) -Algorithm SHA256).Hash }
         })

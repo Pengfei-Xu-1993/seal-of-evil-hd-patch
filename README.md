@@ -1,5 +1,7 @@
 # Seal of Evil HD Patch - Complete Installer Beta
 
+**Local candidate:** The current working source adds 18 resolution choices and original-frame-driven fire, steam, curtain movement and local lighting. See [candidate details](docs/resolution-scene-candidate.md). This candidate has not replaced the published beta linked below.
+
 **[Download the complete EXE installer beta](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/download/v0.25-beta.1/SealHDSetup-Portable-Test.exe)** from the [test release](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.25-beta.1).
 
 Windows 11 compatibility improvements, 1080p / 1440p (2K) / 4K resolution options, borderless fullscreen, HD opening screens, and widescreen main-menu artwork are included in **one graphical installer**. No earlier patch package or separate update is required.

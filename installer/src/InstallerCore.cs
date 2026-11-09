@@ -164,8 +164,8 @@ namespace SealHdInstaller
         public static InstallResult Install(InstallOptions options, Action<InstallProgress> progress)
         {
             if (options == null) throw new ArgumentNullException("options");
-            if (!((options.Width == 1920 && options.Height == 1080) || (options.Width == 2560 && options.Height == 1440) || (options.Width == 3840 && options.Height == 2160)))
-                throw new ArgumentException("Choose 1920 x 1080, 2560 x 1440, or 3840 x 2160.");
+            if (ResolutionProfiles.Find(options.Width, options.Height) == null)
+                throw new ArgumentException("Choose one of the listed game resolutions.");
             string root = ResolveRoot(options.GameDirectory);
             using (var mutex = Acquire(root))
             using (var temporary = new OwnedTemporaryDirectory())
@@ -414,6 +414,7 @@ namespace SealHdInstaller
         {
             string hash = InstallerFiles.Hash(file);
             if (InstallerFiles.EqualHash(hash, "54A78C9003CF8B373EFCA9A5C6187E360060B3DBD9AD22E5D5D1B29F90DEAB74")) return true;
+            if (InstallerFiles.EqualHash(hash, "0D5F939BA8F1727B4D4BCEEA17025E134C2C2325A00892D95200C1615E01EF6A")) return true;
             using (var stream = OpenBundle()) using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                 return InstallerFiles.EqualHash(hash, ReadBundleManifest(archive).Files.Single(f => f.Path == "dinput8.dll").Sha256);
         }

@@ -44,10 +44,10 @@ internal static class RealBackendGuiTests
         {
             await Wait(() => Control<Button>(form, "InstallerInstall").Enabled, "initial supported-folder inspection");
             Assert(Control<ComboBox>(form, "InstallerGameDirectory").Text == root, "real backend inspects the explicitly selected owned fixture");
-            Assert(Control<ComboBox>(form, "InstallerResolution").SelectedIndex == 0, "real GUI defaults to 1080p");
+            Assert(((ResolutionProfile)Control<ComboBox>(form, "InstallerResolution").SelectedItem).Id == 2, "real GUI defaults to 1080p");
             Assert(Control<Label>(form, "InstallerResult").Text.Contains("IV50"), "Chinese installer explains automatic video skipping before installation");
             Screenshot(form, "real-backend-before.png");
-            Control<ComboBox>(form, "InstallerResolution").SelectedIndex = 2;
+            Control<ComboBox>(form, "InstallerResolution").SelectedItem = ResolutionProfiles.Find(3840, 2160);
             Control<Button>(form, "InstallerInstall").PerformClick();
             await Wait(() => File.Exists(Path.Combine(root, InstallerFiles.StateName)) && Control<Button>(form, "InstallerClose").Enabled, "real backend installation completion");
             Assert(Control<ProgressBar>(form, "InstallerProgress").Value == 100, "GUI reaches 100 percent after actual backend writes");

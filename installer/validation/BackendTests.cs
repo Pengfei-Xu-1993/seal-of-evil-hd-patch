@@ -155,7 +155,7 @@ internal static class BackendTests
         Assert(InstallerService.Inspect(root).GameRunning, "same-folder running game detected");
         Throws<IOException>(() => InstallerService.Install(Options(root), null), "running game blocks install"); InstallerService.TestRunningGame = null;
         Same(before, root, "running-game rejection leaves files unchanged");
-        Throws<ArgumentException>(() => InstallerService.Install(new InstallOptions { GameDirectory = root, Width = 800, Height = 600 }, null), "unsupported screen mode rejected");
+        Throws<ArgumentException>(() => InstallerService.Install(new InstallOptions { GameDirectory = root, Width = 1024, Height = 769 }, null), "unsupported screen mode rejected");
         File.AppendAllText(Path.Combine(root, "Gfx3d.dll"), "modified");
         Assert(!InstallerService.Inspect(root).Supported, "modified vendor DLL rejected");
         File.Copy(Path.Combine(source, "Gfx3d.dll"), Path.Combine(root, "Gfx3d.dll"), true);

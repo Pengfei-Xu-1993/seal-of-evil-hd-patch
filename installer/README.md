@@ -13,6 +13,7 @@ The installer deploys one embedded ZIP with the native patch, graphics wrappers,
 From the repository root:
 
 ```powershell
+& .\config\Generate-ResolutionProfiles.ps1 -Check
 & .\source\build.cmd
 & .\installer\Build-VideoProbe.ps1
 & .\installer\Build-Payload.ps1 -BasePayloadDirectory 'C:\BuildInputs\SealHD_v0.24\payload'
@@ -23,7 +24,11 @@ The result is `installer/build/SealHDSetup.exe`. The normal build requests admin
 
 The video helper is built as x86, GUI subsystem, using the .NET Framework compiler. It only builds a DirectShow graph; it does not play movies. The native patch uses this result to skip unsupported original opening/ending playback while preserving the files.
 
-## Audited binary and source correspondence
+## Current local candidate
+
+The working source now includes 18 shared resolution profiles and original-frame-driven fire, steam, curtain movement and local lighting. See [candidate details and validation](../docs/resolution-scene-candidate.md). `Build-Payload.ps1` uses the repository's expanded `config/dgVoodoo.conf`; unchanged wrappers, artwork and default INI inputs still come from the verified base package.
+
+## Previously published beta correspondence
 
 The beta publishes the previously audited EXE unchanged:
 
@@ -33,7 +38,7 @@ The beta publishes the previously audited EXE unchanged:
 | Embedded `dinput8.dll` | `0D5F939BA8F1727B4D4BCEEA17025E134C2C2325A00892D95200C1615E01EF6A` |
 | Embedded `SealHD-bin/SealVideoProbe.exe` | `ADD8E128D76CAB0B76881AE5C667BC7535F8C09F0FF3C85182166D982F96E59F` |
 
-`tested-payload-manifest.json` records all embedded payload hashes. The source under `../source`, `src`, `native`, the icon and installer manifest match the audited candidate's inputs. Public packaging helpers have been adapted to repository-relative paths; they do not change the uploaded EXE. Compiler timestamps, toolchain versions and ZIP metadata can change rebuilt binary hashes, so these instructions do not claim bit-for-bit reproducibility.
+`tested-payload-manifest.json` records the current candidate payload. The identities above describe the earlier published beta; its original matching source remains available at tag `v0.25-beta.1`. Compiler timestamps, toolchain versions and ZIP metadata can change rebuilt binary hashes, so these instructions do not claim bit-for-bit reproducibility.
 
 The native log and payload version retain `0.25-local` / `0.25-local-portability-test` identifiers because the tested EXE was not rebuilt just to publish it as `v0.25-beta.1`.
 

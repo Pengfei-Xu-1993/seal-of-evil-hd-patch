@@ -1,0 +1,60 @@
+{
+  "Status": "Unpublished local candidate",
+  "Installer": {
+    "Name": "SealHDSetup-Complete-Animation-Test.exe",
+    "Bytes": 48012288,
+    "Sha256": "E41845600EC704AEBBF90BF311B9C0E31EF38C21BE2971BA28AF8A63D906F9F4"
+  },
+  "NativeProxySha256": "0CF6800218B921B1949C27F689D9F3B2DFF483A4F1AAC28691A619AF06564E03",
+  "PayloadSha256": "AC7BEF898C4B6CA5462A6B2104779E6716AF0B0575EB44978AF0BD541197D1A5",
+  "SourceInputs": [
+    {
+      "Path": "source/dinput8.cpp",
+      "Sha256": "B74BC8E22572CA73E2E12EFB6FBAB767D8226903317C17B789A1A436D054C9F9"
+    },
+    {
+      "Path": "source/hd_assets.h",
+      "Sha256": "54EC763CFA41F2F6A83A7458C73D4BFF2F28793C72FD7061D550C02B1BCE1EFD"
+    },
+    {
+      "Path": "source/resolution_profiles.h",
+      "Sha256": "DB883CC80F146BEEE6F32D1C8EC21BC614B153FFF6FEDF4304D143EE5074379C"
+    },
+    {
+      "Path": "source/movie_guard.h",
+      "Sha256": "463EA42DEC6BE121605444A2032A40DB8FAD7944EBD7A3D2A9005674532F09EE"
+    },
+    {
+      "Path": "source/native_resolution.h",
+      "Sha256": "B2268DBA7C0CE40FE9A5C2CA1FF164AB2A93973BEC86D1AC96B66B1BDFDFD8E0"
+    },
+    {
+      "Path": "source/hd_intro.h",
+      "Sha256": "D5AD84ACAF7E3BEA61B0D17B645EC9FDAEE506DE943BD06FAB2C749C1919F1BC"
+    },
+    {
+      "Path": "installer/src/InstallerForm.cs",
+      "Sha256": "4CA6D747A91952B3C88480385690ABFC402667F1231706F06CDB823D8666313C"
+    },
+    {
+      "Path": "installer/src/InstallerCore.cs",
+      "Sha256": "1387C666108606F80C5F6B9C83DF1B95C9EF248AF5F64A143ED1DCFD5274D9E3"
+    },
+    {
+      "Path": "installer/src/InstallerConfig.cs",
+      "Sha256": "BD574892D6C4B97AF16F7FE8DEFC7D330C776DD8A658509132EAB4CFD5F2DFAB"
+    },
+    {
+      "Path": "installer/src/ResolutionProfiles.cs",
+      "Sha256": "4C1B587930AE6CB6A68F0E6BE5ABAFA9669C2E0DED4311D413A3A958D7A0269F"
+    },
+    {
+      "Path": "config/resolutions.json",
+      "Sha256": "A49926B7D58D42DCCFC2196A673546162912EF2907AA8CA5C18DA6728199CCFC"
+    },
+    {
+      "Path": "config/dgVoodoo.conf",
+      "Sha256": "15F7657D8A679315B44AC00AEEE434624FE45F94863C8FFB3875D3C29D334C56"
+    }
+  ]
+}

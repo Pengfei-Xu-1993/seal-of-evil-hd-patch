@@ -73,6 +73,10 @@ static volatile LONG openingActive;
 static volatile LONG openingClosed;
 static bool openingEnabled;
 static bool animateFire = true;
+static volatile LONG originalFireFrame;
+static LONG originalFireFrameLogs;
+static volatile LONG originalLightFrame;
+static LONG originalLightFrameLogs;
 static DWORD installThread;
 
 static bool Readable(const void *address, size_t size)
@@ -262,6 +266,197 @@ struct SceneImage {
 };
 static std::array<SceneImage, 21> images;
 
+static const unsigned fireFrameWidth = 170;
+static const unsigned fireSourceHeight = 184;
+static const unsigned fireFirstRow = 0;
+static const unsigned fireFrameHeight = 184;
+static const unsigned fireFrameCount = 5;
+
+struct FireAtlas {
+    std::vector<BYTE> rgba;
+    unsigned activePixels = 0;
+};
+
+struct FirePixel { BYTE red, green, blue, alpha; };
+
+// Decode original RGB565 pixels only; the runtime texture contains no whole
+// cauldron sprite, generated artwork, or replacement game resource.
+static bool DecodeOriginalPixels(const SceneImage &image, std::vector<FirePixel> &pixels,
+    unsigned width, unsigned height)
+{
+    const auto &source = image.original;
+    if (!width || width > 2048 || !height || height > 2048 || image.width != width || image.height != height ||
+        source.size() < 64 + height * 4 || memcmp(source.data(), "xbm\0", 4) ||
+        Read32(source.data() + 20) != width || Read32(source.data() + 24) != height ||
+        source[28] != 16 || source[29] != 16 || source[30] != 1 || source[31] || source[36]) return false;
+    pixels.assign(width * height, {});
+    for (unsigned y = 0; y < height; ++y) {
+        size_t position = 64 + Read32(source.data() + 64 + y * 4);
+        size_t end = y + 1 < height ?
+            64 + Read32(source.data() + 64 + (y + 1) * 4) : source.size();
+        if (position > end || end > source.size() || position < 64 + height * 4) return false;
+        unsigned xBytes = 0;
+        while (position < end) {
+            if (end - position < 2) return false;
+            WORD skip = Read16(source.data() + position); position += 2;
+            if ((skip & 1) || skip > width * 2 - xBytes) return false;
+            xBytes += skip;
+            if (xBytes == width * 2 && position == end) break;
+            if (end - position < 2) return false;
+            WORD count = Read16(source.data() + position); position += 2;
+            if ((count & 1) || count > width * 2 - xBytes || count > end - position) return false;
+            for (unsigned offset = 0; offset < count; offset += 2) {
+                WORD color = Read16(source.data() + position + offset);
+                if (color != 0xf81f) {
+                    auto &pixel = pixels[y * width + (xBytes + offset) / 2];
+                    pixel = { static_cast<BYTE>(((color >> 11) & 31) * 255 / 31),
+                        static_cast<BYTE>(((color >> 5) & 63) * 255 / 63),
+                        static_cast<BYTE>((color & 31) * 255 / 31), 255 };
+                }
+            }
+            xBytes += count; position += count;
+        }
+        if (position != end || xBytes != width * 2) return false;
+    }
+    return true;
+}
+
+static bool DecodeFireFrame(const SceneImage &image, std::vector<FirePixel> &pixels)
+{
+    return DecodeOriginalPixels(image, pixels, fireFrameWidth, fireSourceHeight);
+}
+
+static float SaturateFire(float value) { return (std::max)(0.f, (std::min)(1.f, value)); }
+static BYTE FireByte(float value) { return static_cast<BYTE>(SaturateFire(value) * 255.f + .5f); }
+
+static bool BuildFireAtlas(FireAtlas &atlas)
+{
+    atlas = {};
+    std::array<std::vector<FirePixel>, fireFrameCount> frames;
+    for (unsigned frame = 0; frame < fireFrameCount; ++frame)
+        if (images[15 + frame].id != 1243 + frame || !DecodeFireFrame(images[15 + frame], frames[frame])) return false;
+    const unsigned area = fireFrameWidth * fireFrameHeight;
+    std::vector<float> weights(area, 0.f);
+    std::vector<float> minimum(area, 1.f), maximum(area, 0.f);
+    for (unsigned i = 0; i < area; ++i) {
+        float low[3] = { 1, 1, 1 }, high[3] = {};
+        float warm = 0, neutral = 0;
+        for (unsigned frame = 0; frame < fireFrameCount; ++frame) {
+            const auto &pixel = frames[frame][fireFirstRow * fireFrameWidth + i];
+            const float channels[] = { pixel.red / 255.f, pixel.green / 255.f, pixel.blue / 255.f };
+            for (unsigned c = 0; c < 3; ++c) {
+                low[c] = (std::min)(low[c], channels[c]); high[c] = (std::max)(high[c], channels[c]);
+            }
+            const float light = channels[0] * .2126f + channels[1] * .7152f + channels[2] * .0722f;
+            minimum[i] = (std::min)(minimum[i], light); maximum[i] = (std::max)(maximum[i], light);
+            warm = (std::max)(warm, SaturateFire((channels[0] - channels[2] - .08f) * 3.f) *
+                SaturateFire((channels[0] - .32f) * 3.f) * SaturateFire(channels[1] * 8.f));
+            float spread = (std::max)(channels[0], (std::max)(channels[1], channels[2])) -
+                (std::min)(channels[0], (std::min)(channels[1], channels[2]));
+            neutral = (std::max)(neutral, SaturateFire((.23f - spread) * 7.f) *
+                SaturateFire(((std::min)(channels[0], (std::min)(channels[1], channels[2])) - .1f) * 4.f));
+        }
+        float change = (std::max)(high[0] - low[0], (std::max)(high[1] - low[1], high[2] - low[2]));
+        unsigned x = i % fireFrameWidth, y = i / fireFrameWidth;
+        bool lowerFire = y >= 128 && y < 160;
+        bool leftFire = x >= 6 && x < 53 && y >= 52 && y < 116;
+        bool rightFire = x >= 125 && x < 152 && y >= 85 && y < 132;
+        bool steam = x >= 56 && x < 113 && y >= 23 && y < 67;
+        float material = lowerFire || leftFire || rightFire ? warm : steam ? neutral : 0.f;
+        weights[i] = material * SaturateFire((change - .08f) * 4.f) *
+            SaturateFire((maximum[i] - minimum[i] - .025f) * 10.f);
+        if (weights[i] > .05f) ++atlas.activePixels;
+    }
+    if (atlas.activePixels < 100) return false;
+    atlas.rgba.resize(static_cast<size_t>(area) * fireFrameCount * 4);
+    for (unsigned frame = 0; frame < fireFrameCount; ++frame)
+        for (unsigned i = 0; i < area; ++i) {
+            const auto &pixel = frames[frame][fireFirstRow * fireFrameWidth + i];
+            float r = pixel.red / 255.f, g = pixel.green / 255.f, b = pixel.blue / 255.f;
+            float light = r * .2126f + g * .7152f + b * .0722f;
+            unsigned x = i % fireFrameWidth, y = i / fireFrameWidth;
+            float edge = SaturateFire((std::min)(x, fireFrameWidth - 1 - x) * .5f) *
+                SaturateFire((std::min)(y, fireFrameHeight - 1 - y) * .5f);
+            BYTE *output = atlas.rgba.data() + (frame * area + i) * 4;
+            // R holds changing original-frame energy; G/B retain its color
+            // ratios. Only audited flame/steam regions receive any alpha.
+            output[0] = FireByte((light - minimum[i]) / (std::max)(.001f, maximum[i] - minimum[i]));
+            output[1] = FireByte(g / (std::max)(.05f, r));
+            output[2] = FireByte(b / (std::max)(.05f, r));
+            output[3] = FireByte(weights[i] * edge);
+        }
+    return true;
+}
+
+static const unsigned lightFrameCount = 9;
+static const unsigned lightRegionCount = 5;
+// Source-pixel displacement measured by brightness-normalized and chroma NCC.
+// Top curtain anchors stay fixed. Columns: lower-left X, lower-right X,
+// middle X, lower Y. The original nine-frame draw cadence selects each row.
+static const float originalCurtainMotion[lightFrameCount][4] = {
+    {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {2,1,0,0}, {4,2,1,1},
+    {3,2,2,1}, {3,2,2,1}, {2,2,1,1}, {1,1,0,0}
+};
+struct NativeLighting {
+    float gains[lightFrameCount][lightRegionCount][3] = {};
+    bool ready = false;
+};
+
+static int OriginalLightingFrame(DWORD id)
+{
+    if (id >= 1083 && id <= 1087) return static_cast<int>(id - 1083);
+    if (id >= 1119 && id <= 1122) return static_cast<int>(id - 1119 + 5);
+    return -1;
+}
+
+static bool BuildNativeLighting(NativeLighting &lighting)
+{
+    lighting = {};
+    // Audited original 800x600 coordinates. The nine-frame ambient layer starts
+    // at (99,270); sample only the curtain, wall, two ground patches and pot.
+    // The separate right-hand animation is a moving ornament, not firelight.
+    static const unsigned regions[lightRegionCount][4] = {
+        {224,345,304,485}, {114,320,209,490}, {144,500,319,595},
+        {429,480,599,595}, {319,420,459,515}
+    };
+    float means[lightFrameCount][lightRegionCount][3] = {};
+    std::vector<FirePixel> pixels;
+    for (unsigned frame = 0; frame < lightFrameCount; ++frame) {
+        const SceneImage &image = images[frame + 1];
+        if (OriginalLightingFrame(image.id) != static_cast<int>(frame) ||
+            !DecodeOriginalPixels(image, pixels, 521, 330)) return false;
+        for (unsigned region = 0; region < lightRegionCount; ++region) {
+            double sums[3] = {}; unsigned count = 0;
+            const auto &box = regions[region];
+            for (unsigned y = box[1] - 270; y < box[3] - 270; ++y)
+                for (unsigned x = box[0] - 99; x < box[2] - 99; ++x) {
+                    const auto &pixel = pixels[y * 521 + x];
+                    if (!pixel.alpha) continue;
+                    sums[0] += pixel.red; sums[1] += pixel.green; sums[2] += pixel.blue; ++count;
+                }
+            if (count < 100) return false;
+            for (unsigned channel = 0; channel < 3; ++channel)
+                means[frame][region][channel] = static_cast<float>(sums[channel] / count);
+        }
+    }
+    float largestChange = 0;
+    for (unsigned region = 0; region < lightRegionCount; ++region)
+        for (unsigned channel = 0; channel < 3; ++channel) {
+            float average = 0;
+            for (unsigned frame = 0; frame < lightFrameCount; ++frame) average += means[frame][region][channel];
+            average /= lightFrameCount;
+            for (unsigned frame = 0; frame < lightFrameCount; ++frame) {
+                // Keep the cycle's mean brightness. A dark blue denominator
+                // must not amplify 5-bit quantization into large hue changes.
+                float delta = (means[frame][region][channel] - average) / (std::max)(24.f, average);
+                lighting.gains[frame][region][channel] = 1.f + (std::max)(-.25f, (std::min)(.25f, delta));
+                largestChange = (std::max)(largestChange, delta < 0 ? -delta : delta);
+            }
+        }
+    lighting.ready = largestChange > .005f;
+    return lighting.ready;
+}
+
 // Validate the complete run structure before changing any payload. Transparent
 // skip runs are retained; opaque pixels use RGB565 0xF01E. The engine's later
 // CImageSurface blit discards exact 0xF81F, so that magic color cannot carry our
@@ -386,6 +581,19 @@ static unsigned __int64 __cdecl Dispatch(void *object, DWORD slot)
     // The game's complete scene is cached after its first Paint. Establish key
     // substitution before that Paint, rather than waiting for its first Present.
     SceneKind wanted = WantedScene();
+    // Keep the original animation's frame cadence. Duration units are owned by
+    // the game; do not replace them with an invented wall-clock frame rate.
+    if (wanted == MenuScene && animateFire && imageId >= 1243 && imageId <= 1247) {
+        InterlockedExchange(&originalFireFrame, static_cast<LONG>(imageId - 1243));
+        if (logger && InterlockedIncrement(&originalFireFrameLogs) <= 10)
+            logger("HD menu original campfire frame=%lu", imageId - 1243);
+    }
+    int lightFrame = OriginalLightingFrame(imageId);
+    if (wanted == MenuScene && animateFire && lightFrame >= 0) {
+        InterlockedExchange(&originalLightFrame, lightFrame);
+        if (logger && InterlockedIncrement(&originalLightFrameLogs) <= 12)
+            logger("HD menu original lighting frame=%d id=%lu", lightFrame, imageId);
+    }
     bool presentationReady = wanted && presentationPathProbe && presentationPathProbe();
     if (wanted && !presentationReady && logger && InterlockedIncrement(&presentationFallbackLogs) <= 8)
         logger("HD artwork original-image fallback: outer presentation path not verified scene=%ld", wanted);
@@ -502,12 +710,23 @@ static int __cdecl CreateXBmp(void *bytes, void *&output)
 static const char shaders[] = R"HLSL(
 Texture2D<float4> gameFrame : register(t0);
 Texture2D<float4> scene : register(t1);
+Texture2D<float4> nativeFire : register(t2);
 SamplerState imageSampler : register(s0);
 cbuffer Frame : register(b0) {
     float outputAspect;
     float sceneAspect;
     float seconds;
     float fireAnimation;
+    float nativeFireFrame;
+    float nativeFireReady;
+    float nativeLightFrame;
+    float nativeLightReady;
+    float4 curtainLight;
+    float4 wallLight;
+    float4 leftGroundLight;
+    float4 rightGroundLight;
+    float4 potLight;
+    float4 curtainMotion;
 };
 struct Vertex { float4 position : SV_Position; float2 uv : TEXCOORD0; };
 Vertex VSMain(uint id : SV_VertexID) {
@@ -522,24 +741,73 @@ float rectangle(float2 p, float2 low, float2 high, float fade) {
     float2 b = 1 - smoothstep(high - fade, high, p);
     return a.x * a.y * b.x * b.y;
 }
+float4 originalZone(float2 p, float2 low, float2 high, float2 sourceLow, float2 sourceHigh, float frame) {
+    float mask = rectangle(p, low, high, .0025);
+    [branch] if (mask <= 0) return 0;
+    float2 local = saturate((p - low) / (high - low));
+    float2 pixel = sourceLow + .5 + local * (sourceHigh - sourceLow - 1);
+    float2 uv = float2(pixel.x / 170, (frame * 184 + pixel.y) / 920);
+    float4 sample = nativeFire.SampleLevel(imageSampler, uv, 0);
+    sample.a *= mask;
+    return sample;
+}
 float4 PSMain(Vertex input) : SV_Target {
     // COVER fills the physical monitor. On a 16:10 display this crops only the
     // outer horizontal portions of a 16:9 image, preserving original UI mapping.
     float2 bgUV = input.uv;
     if (outputAspect < sceneAspect) bgUV.x = .5 + (bgUV.x - .5) * outputAspect / sceneAspect;
     else bgUV.y = .5 + (bgUV.y - .5) * sceneAspect / outputAspect;
-    float flame = rectangle(bgUV, float2(.548, .772), float2(.68, .835), .009) * fireAnimation;
-    float flicker = sin(seconds * 11.1) * .45 + sin(seconds * 17.7 + 1.2) * .3 + sin(seconds * 6.3) * .25;
-    float2 warpedUV = bgUV;
-    // Warp only the flames below the cauldron. The rim/body and village geometry
-    // retain their exact generated silhouette. No low-resolution art is overlaid.
-    warpedUV.x += flame * sin(bgUV.y * 540 - seconds * 13) * .00065;
-    warpedUV.y += flame * sin(bgUV.x * 450 + seconds * 9) * .0003;
-    float3 background = scene.SampleLevel(imageSampler, warpedUV, 0).rgb;
-    float emissive = saturate((background.r - background.g) * 3) * smoothstep(.4, .95, background.r);
-    background *= 1 + flame * emissive * flicker * .075;
-    float glow = rectangle(bgUV, float2(.53, .815), float2(.70, .91), .035) * fireAnimation;
-    background += glow * flicker * float3(.009, .0035, .0005);
+    float2 sceneUV = bgUV;
+    if (fireAnimation > .5 && nativeLightReady > .5) {
+        const float2 clothLow = float2(.3703,.5167), clothHigh = float2(.4305,.7639);
+        float2 cloth = saturate((bgUV - clothLow) / (clothHigh - clothLow));
+        float edge = rectangle(bgUV, clothLow, clothHigh, .004);
+        float lower = smoothstep(.30, .72, cloth.y);
+        float middle = smoothstep(.08, .32, cloth.y) * (1 - lower);
+        float side = saturate((cloth.x - .28) / .41);
+        float dx = lerp(curtainMotion.x, curtainMotion.y, side) * lower + curtainMotion.z * middle;
+        float dy = curtainMotion.w * lower;
+        // Inverse sampling moves the HD fabric to the measured source pose.
+        // The upper edge and surrounding wall stay fixed, without a sine wave.
+        sceneUV -= edge * float2(dx / 80, dy / 140) * (clothHigh - clothLow);
+    }
+    float3 background = scene.SampleLevel(imageSampler, sceneUV, 0).rgb;
+    if (fireAnimation > .5 && nativeLightReady > .5) {
+        // These gains come from the original nine ambient frames, sampled
+        // around their cycle mean. Only lighting changes; HD texels never move.
+        float3 gain = 1;
+        gain += (curtainLight.rgb - 1) * rectangle(bgUV, float2(.3703,.5167), float2(.4305,.7639), .014);
+        gain += (wallLight.rgb - 1) * rectangle(bgUV, float2(.2734,.5347), float2(.3711,.8028), .022);
+        gain += (leftGroundLight.rgb - 1) * rectangle(bgUV, float2(.4023,.7639), float2(.5531,.9097), .035);
+        gain += (rightGroundLight.rgb - 1) * rectangle(bgUV, float2(.6797,.7569), float2(.8203,.9028), .035);
+        gain += (potLight.rgb - 1) * rectangle(bgUV, float2(.5578,.6667), float2(.6797,.7861), .012);
+        background *= clamp(gain, .75, 1.25);
+    }
+    if (fireAnimation > .5 && nativeFireReady > .5) {
+        float frame = clamp(floor(nativeFireFrame + .5), 0, 4);
+        float4 fire = originalZone(bgUV, float2(.548,.755), float2(.68,.803),
+            float2(0,128), float2(170,160), frame);
+        float warmHD = smoothstep(.16, .45, background.r - background.b) *
+            smoothstep(.58, .88, background.r);
+        fire.a *= warmHD;
+        float emission = .09;
+        float4 leftFire = originalZone(bgUV, float2(.5523,.6500), float2(.5828,.7417),
+            float2(6,52), float2(53,116), frame);
+        float4 rightFire = originalZone(bgUV, float2(.6563,.6944), float2(.6797,.7639),
+            float2(125,85), float2(152,132), frame);
+        // Side tongues can rise in front of the dark pot silhouette, as in the
+        // original frames. Only flame energy/color is used, never the pot image.
+        leftFire.a *= .78; rightFire.a *= .78;
+        if (leftFire.a > fire.a) { fire = leftFire; emission = .65; }
+        if (rightFire.a > fire.a) { fire = rightFire; emission = .65; }
+        float3 tint = float3(1, fire.g, fire.b);
+        float3 burning = background * (.24 + fire.r * 1.8) + tint * fire.r * fire.r * emission;
+        background = lerp(background, burning, fire.a);
+        float4 steam = originalZone(bgUV, float2(.5836,.6125), float2(.6414,.6694),
+            float2(56,23), float2(113,67), frame);
+        float opacity = steam.a * steam.r * .42;
+        background = lerp(background, .56 * float3(1, steam.g, steam.b), opacity);
+    }
 
     // Original widgets occupy the existing centered 4:3 viewport, so all input
     // coordinate hooks continue to use their already validated mapping.
@@ -569,6 +837,7 @@ struct Gpu {
     ID3D11Texture2D *frame = nullptr;
     ID3D11ShaderResourceView *frameView = nullptr;
     ID3D11ShaderResourceView *sceneView = nullptr;
+    ID3D11ShaderResourceView *fireView = nullptr;
     ID3D11VertexShader *vertex = nullptr;
     ID3D11PixelShader *pixel = nullptr;
     ID3D11SamplerState *sampler = nullptr;
@@ -576,6 +845,7 @@ struct Gpu {
     ID3D11Buffer *constants = nullptr;
     D3D11_TEXTURE2D_DESC frameDescription = {};
     float sceneAspect = 16.0f / 9.0f;
+    NativeLighting lighting;
     ULONGLONG start = 0;
     LONG composed = 0;
     bool failed = false;
@@ -597,11 +867,13 @@ static void DestroyGpu(bool clearFailure)
     Release(gpu.pixel);
     Release(gpu.vertex);
     Release(gpu.sceneView);
+    Release(gpu.fireView);
     Release(gpu.frameView);
     Release(gpu.frame);
     Release(gpu.context);
     Release(gpu.device);
     gpu.frameDescription = {};
+    gpu.lighting = {};
     gpu.owner = nullptr;
     if (clearFailure) gpu.failed = false;
 }
@@ -667,6 +939,50 @@ static HRESULT LoadSceneTexture(ID3D11Device *device, ID3D11ShaderResourceView *
     return result;
 }
 
+static void LoadNativeFireTexture(ID3D11Device *device)
+{
+    if (!animateFire || gpu.sceneKind != MenuScene) return;
+    FireAtlas atlas;
+    ID3D11Texture2D *texture = nullptr;
+    HRESULT result = E_FAIL;
+    try {
+        if (BuildFireAtlas(atlas)) {
+            D3D11_TEXTURE2D_DESC description = {};
+            description.Width = fireFrameWidth;
+            description.Height = fireFrameHeight * fireFrameCount;
+            description.MipLevels = description.ArraySize = description.SampleDesc.Count = 1;
+            description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            description.Usage = D3D11_USAGE_IMMUTABLE;
+            description.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            D3D11_SUBRESOURCE_DATA data = { atlas.rgba.data(), fireFrameWidth * 4, 0 };
+            result = device->CreateTexture2D(&description, &data, &texture);
+            if (SUCCEEDED(result)) result = device->CreateShaderResourceView(texture, nullptr, &gpu.fireView);
+        }
+    } catch (...) { result = E_OUTOFMEMORY; }
+    Release(texture);
+    if (FAILED(result)) Release(gpu.fireView);
+    if (logger) logger("HD menu original campfire atlas hr=%08lx frames=%u activePixels=%u; %s",
+        result, fireFrameCount, atlas.activePixels, gpu.fireView ? "game-frame animation enabled" : "static HD fire retained");
+}
+
+static void LoadNativeLighting()
+{
+    gpu.lighting = {};
+    if (!animateFire || gpu.sceneKind != MenuScene) return;
+    try { BuildNativeLighting(gpu.lighting); }
+    catch (...) { gpu.lighting = {}; }
+    if (logger) logger("HD menu original lighting curves ready=%d frames=%u regions=%u; %s",
+        gpu.lighting.ready, lightFrameCount, lightRegionCount,
+        gpu.lighting.ready && gpu.fireView ? "original ambient-frame lighting enabled" : "static HD fire and lighting retained");
+}
+
+struct FrameConstants {
+    float aspect, sceneAspect, seconds, animation, fireFrame, fireReady, lightFrame, lightReady;
+    float gains[lightRegionCount][4];
+    float curtainMotion[4];
+};
+static_assert(sizeof(FrameConstants) == 128, "HLSL and C++ frame constant layouts must agree");
+
 static HRESULT InitializeGpu(IDXGISwapChain *chain, SceneKind sceneKind)
 {
     gpu.owner = chain;
@@ -694,6 +1010,8 @@ static HRESULT InitializeGpu(IDXGISwapChain *chain, SceneKind sceneKind)
     if (SUCCEEDED(result)) result = gpu.device->CreatePixelShader(pixel->GetBufferPointer(), pixel->GetBufferSize(), nullptr, &gpu.pixel);
     if (SUCCEEDED(result)) result = LoadSceneTexture(gpu.device, &gpu.sceneView, gpu.sceneAspect,
         sceneKind == OpeningScene ? openingImagePath : imagePath);
+    if (SUCCEEDED(result)) LoadNativeFireTexture(gpu.device);
+    if (SUCCEEDED(result)) LoadNativeLighting();
     if (SUCCEEDED(result)) {
         D3D11_SAMPLER_DESC sampler = {};
         sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -710,7 +1028,7 @@ static HRESULT InitializeGpu(IDXGISwapChain *chain, SceneKind sceneKind)
     }
     if (SUCCEEDED(result)) {
         D3D11_BUFFER_DESC constants = {};
-        constants.ByteWidth = 16;
+        constants.ByteWidth = sizeof(FrameConstants);
         constants.Usage = D3D11_USAGE_DEFAULT;
         constants.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         result = gpu.device->CreateBuffer(&constants, nullptr, &gpu.constants);
@@ -820,10 +1138,20 @@ static void Composite(IDXGISwapChain *chain)
         if (gpu.frameDescription.SampleDesc.Count > 1)
             gpu.context->ResolveSubresource(gpu.frame, 0, backbuffer, 0, ViewFormat(gpu.frameDescription.Format));
         else gpu.context->CopyResource(gpu.frame, backbuffer);
-        struct Constants { float aspect, sceneAspect, seconds, animation; } constants = {
+        bool effectsReady = gpu.fireView && gpu.lighting.ready;
+        LONG ambientFrame = InterlockedCompareExchange(&originalLightFrame, 0, 0);
+        if (ambientFrame < 0 || ambientFrame >= static_cast<LONG>(lightFrameCount)) ambientFrame = 0;
+        FrameConstants constants = {
             static_cast<float>(gpu.frameDescription.Width) / gpu.frameDescription.Height,
             gpu.sceneAspect, static_cast<float>(GetTickCount64() - gpu.start) * .001f,
-            wanted == MenuScene && animateFire ? 1.f : 0.f };
+            wanted == MenuScene && animateFire ? 1.f : 0.f,
+            static_cast<float>(InterlockedCompareExchange(&originalFireFrame, 0, 0)),
+            effectsReady ? 1.f : 0.f, static_cast<float>(ambientFrame), effectsReady ? 1.f : 0.f, {}, {} };
+        for (unsigned region = 0; region < lightRegionCount; ++region)
+            for (unsigned channel = 0; channel < 3; ++channel)
+                constants.gains[region][channel] = effectsReady ? gpu.lighting.gains[ambientFrame][region][channel] : 1.f;
+        for (unsigned component = 0; component < 4; ++component)
+            constants.curtainMotion[component] = effectsReady ? originalCurtainMotion[ambientFrame][component] : 0.f;
         gpu.context->UpdateSubresource(gpu.constants, 0, nullptr, &constants, 0, 0);
         gpu.context->IASetInputLayout(nullptr);
         gpu.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -833,8 +1161,8 @@ static void Composite(IDXGISwapChain *chain)
         gpu.context->DSSetShader(nullptr, nullptr, 0);
         gpu.context->PSSetShader(gpu.pixel, nullptr, 0);
         gpu.context->PSSetConstantBuffers(0, 1, &gpu.constants);
-        ID3D11ShaderResourceView *views[] = { gpu.frameView, gpu.sceneView };
-        gpu.context->PSSetShaderResources(0, 2, views);
+        ID3D11ShaderResourceView *views[] = { gpu.frameView, gpu.sceneView, gpu.fireView };
+        gpu.context->PSSetShaderResources(0, 3, views);
         gpu.context->PSSetSamplers(0, 1, &gpu.sampler);
         gpu.context->RSSetState(gpu.rasterizer);
         D3D11_VIEWPORT viewport = { 0, 0, static_cast<float>(gpu.frameDescription.Width),
@@ -842,8 +1170,8 @@ static void Composite(IDXGISwapChain *chain)
         gpu.context->RSSetViewports(1, &viewport);
         gpu.context->OMSetRenderTargets(1, &target, nullptr);
         gpu.context->Draw(3, 0);
-        ID3D11ShaderResourceView *empty[2] = {};
-        gpu.context->PSSetShaderResources(0, 2, empty);
+        ID3D11ShaderResourceView *empty[3] = {};
+        gpu.context->PSSetShaderResources(0, 3, empty);
         gpu.context->OMSetRenderTargets(0, nullptr, nullptr);
         ID3DDeviceContextState *ours = nullptr;
         gpu.context->SwapDeviceContextState(previous, &ours);

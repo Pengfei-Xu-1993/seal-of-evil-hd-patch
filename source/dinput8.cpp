@@ -8,6 +8,7 @@
 #include "hd_intro.h"
 #include "hd_assets.h"
 #include "movie_guard.h"
+#include "resolution_profiles.h"
 
 // The game imports only DirectInput8Create. This proxy preserves that API and
 // records the display initialization calls used by the original executable.
@@ -28,14 +29,8 @@ static UINT logicalHeight;
 static LONG inputTraceCount;
 static LONG fullscreenCorrectionActive;
 static LONG fullscreenCorrectionCount;
-struct ResolutionProfile { DWORD width, height; const char *label; };
-static const ResolutionProfile resolutionProfiles[] = {
-    { 800, 600, "800*600" },
-    { 1024, 768, "1024*768" },
-    { 1920, 1080, "1920*1080" },
-    { 2560, 1440, "2560*1440" },
-    { 3840, 2160, "3840*2160" },
-};
+using seal_resolution::kResolutionProfiles;
+using seal_resolution::kResolutionOrder;
 static int currentProfile = -1;
 static int pendingProfile = -1;
 static char customResolutionLabel[32];
@@ -898,10 +893,37 @@ static void PatchImport(HMODULE module, const char *name, Function replacement, 
     }
 }
 
+static int ResolveResolutionProfile(int storedProfile, DWORD *width, DWORD *height)
+{
+    // Profile IDs are stable across releases: the original IDs 0..4 keep their
+    // dimensions. A valid ID is authoritative; custom configurations opt out
+    // with ProfileIndex=-1 and retain their explicit Width and Height.
+    if (storedProfile >= 0 && storedProfile < static_cast<int>(_countof(kResolutionProfiles))) {
+        *width = kResolutionProfiles[storedProfile].width;
+        *height = kResolutionProfiles[storedProfile].height;
+        return storedProfile;
+    }
+    for (int id = 0; id < static_cast<int>(_countof(kResolutionProfiles)); ++id)
+        if (kResolutionProfiles[id].width == *width && kResolutionProfiles[id].height == *height)
+            return id;
+    return -1;
+}
+
+static int NextResolutionProfile(int profile, int direction)
+{
+    const int count = static_cast<int>(_countof(kResolutionOrder));
+    // Selection order is separate from persistent IDs so inserting a common
+    // lower mode never turns an existing 1080p/1440p/4K setting into another mode.
+    for (int index = 0; index < count; ++index)
+        if (kResolutionOrder[index] == profile)
+            return kResolutionOrder[(index + count + (direction < 0 ? -1 : 1)) % count];
+    return kResolutionOrder[direction < 0 ? count - 1 : 0];
+}
+
 static const char *ResolutionLabel(int profile)
 {
-    if (profile >= 0 && profile < static_cast<int>(_countof(resolutionProfiles)))
-        return resolutionProfiles[profile].label;
+    if (profile >= 0 && profile < static_cast<int>(_countof(kResolutionProfiles)))
+        return kResolutionProfiles[profile].label;
     _snprintf_s(customResolutionLabel, sizeof(customResolutionLabel), _TRUNCATE,
         "%lu*%lu", renderWidth, renderHeight);
     return customResolutionLabel;
@@ -952,10 +974,7 @@ __declspec(naked) static void DefaultResolutionLabelThunk()
 
 static void StepResolution(void *dialog, int direction)
 {
-    const int count = static_cast<int>(_countof(resolutionProfiles));
-    if (pendingProfile < 0 || pendingProfile >= count)
-        pendingProfile = direction < 0 ? count - 1 : 0;
-    else pendingProfile = (pendingProfile + count + direction) % count;
+    pendingProfile = NextResolutionProfile(pendingProfile, direction);
     BYTE *object = static_cast<BYTE *>(dialog);
     *reinterpret_cast<DWORD *>(object + 0x344) = 1;
     void *widget = *reinterpret_cast<void **>(object + 0x2d0);
@@ -1004,9 +1023,9 @@ static int __cdecl ApplyResolutionProfile(int type, int mode, int force)
     DWORD oldHeight = renderHeight;
     DWORD newWidth = oldWidth;
     DWORD newHeight = oldHeight;
-    if (pendingProfile >= 0 && pendingProfile < static_cast<int>(_countof(resolutionProfiles))) {
-        newWidth = resolutionProfiles[pendingProfile].width;
-        newHeight = resolutionProfiles[pendingProfile].height;
+    if (pendingProfile >= 0 && pendingProfile < static_cast<int>(_countof(kResolutionProfiles))) {
+        newWidth = kResolutionProfiles[pendingProfile].width;
+        newHeight = kResolutionProfiles[pendingProfile].height;
     }
     bool changed = newWidth != oldWidth || newHeight != oldHeight;
     DWORD failedRva = 0;
@@ -1204,14 +1223,10 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
         renderWidth = GetPrivateProfileIntA("Display", "Width", 1920, path);
         renderHeight = GetPrivateProfileIntA("Display", "Height", 1080, path);
         int storedProfile = static_cast<int>(GetPrivateProfileIntA("Display", "ProfileIndex", -1, path));
-        if (storedProfile >= 0 && storedProfile < static_cast<int>(_countof(resolutionProfiles))) {
-            renderWidth = resolutionProfiles[storedProfile].width;
-            renderHeight = resolutionProfiles[storedProfile].height;
-        }
-        for (int i = 0; i < static_cast<int>(_countof(resolutionProfiles)); ++i)
-            if (renderWidth == resolutionProfiles[i].width && renderHeight == resolutionProfiles[i].height)
-                currentProfile = i;
+        currentProfile = ResolveResolutionProfile(storedProfile, &renderWidth, &renderHeight);
         pendingProfile = currentProfile;
+        Log("Resolution profile selection stored=%d active=%d dimensions=%lux%lu catalogCount=%u",
+            storedProfile, currentProfile, renderWidth, renderHeight, seal_resolution::kResolutionCount);
         borderless = GetPrivateProfileIntA("Display", "Borderless", 1, path) != 0;
         bool validDimensions = renderWidth >= 640 && renderWidth <= 7680 &&
             renderHeight >= 480 && renderHeight <= 4320 &&

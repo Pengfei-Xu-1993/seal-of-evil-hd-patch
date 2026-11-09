@@ -1,9 +1,9 @@
 {
-  "Version": "0.25-local-portability-test",
+  "Version": "0.26-resolution-candidate",
   "Files": [
     {
       "Path": "dinput8.dll",
-      "Sha256": "0D5F939BA8F1727B4D4BCEEA17025E134C2C2325A00892D95200C1615E01EF6A"
+      "Sha256": "0CF6800218B921B1949C27F689D9F3B2DFF483A4F1AAC28691A619AF06564E03"
     },
     {
       "Path": "D3D8.dll",
@@ -19,7 +19,7 @@
     },
     {
       "Path": "dgVoodoo.conf",
-      "Sha256": "C529F0EAD70418234D1C17D8B5A3E66268EB054514A38C4BF0AE288D8768C63F"
+      "Sha256": "15F7657D8A679315B44AC00AEEE434624FE45F94863C8FFB3875D3C29D334C56"
     },
     {
       "Path": "SealHD.ini",

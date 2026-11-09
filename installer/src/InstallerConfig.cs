@@ -33,8 +33,9 @@ namespace SealHdInstaller
             Set(lines, "Compatibility", "VirtualFullscreen", "1", true);
             Set(lines, "Display", "Width", options.Width.ToString(System.Globalization.CultureInfo.InvariantCulture), true);
             Set(lines, "Display", "Height", options.Height.ToString(System.Globalization.CultureInfo.InvariantCulture), true);
-            int profile = options.Width == 1920 ? 2 : options.Width == 2560 ? 3 : 4;
-            Set(lines, "Display", "ProfileIndex", profile.ToString(), true);
+            var profile = ResolutionProfiles.Find(options.Width, options.Height);
+            if (profile == null) throw new ArgumentException("Choose one of the listed game resolutions.");
+            Set(lines, "Display", "ProfileIndex", profile.Id.ToString(System.Globalization.CultureInfo.InvariantCulture), true);
             Set(lines, "Display", "Borderless", options.Borderless ? "1" : "0", true);
             Set(lines, "Assets", "MainMenu", "1", true);
             return encoding.GetBytes(byteOrderMark + String.Join(newline, lines));

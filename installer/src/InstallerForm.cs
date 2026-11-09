@@ -97,6 +97,7 @@ namespace SealHdInstaller
             display.RowStyles.Add(new RowStyle(SizeType.Absolute, 29)); display.RowStyles.Add(new RowStyle(SizeType.Absolute, 39)); display.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             resolutionLabel.Dock = DockStyle.Fill; resolutionLabel.Font = UiFonts.Create(10F, FontStyle.Bold); resolutionLabel.Margin = Padding.Empty;
             resolution.Name = "InstallerResolution"; resolution.DropDownStyle = ComboBoxStyle.DropDownList; resolution.Dock = DockStyle.Top; resolution.Margin = new Padding(0, 3, 20, 0);
+            resolution.IntegralHeight = false; resolution.DropDownHeight = 360; resolution.DropDownWidth = 300;
             borderless.Name = "InstallerBorderless"; borderless.Checked = true; borderless.AutoSize = true; borderless.Margin = new Padding(0, 5, 0, 0);
             resolutionHelp.Dock = DockStyle.Fill; resolutionHelp.Margin = Padding.Empty; resolutionHelp.ForeColor = Color.FromArgb(83, 98, 107);
             display.Controls.Add(resolutionLabel, 0, 0); display.SetColumnSpan(resolutionLabel, 2); display.Controls.Add(resolution, 0, 1); display.Controls.Add(borderless, 1, 1); display.Controls.Add(resolutionHelp, 0, 2); display.SetColumnSpan(resolutionHelp, 2);
@@ -109,7 +110,7 @@ namespace SealHdInstaller
             check.Controls.Add(inspectionStatus, 0, 0); check.Controls.Add(showDetails, 0, 1); root.Controls.Add(check, 0, 3);
 
             var result = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
-            result.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); result.RowStyles.Add(new RowStyle(SizeType.Absolute, 49)); result.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            result.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); result.RowStyles.Add(new RowStyle(SizeType.Absolute, 72)); result.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             resultSummary.Name = "InstallerResult"; resultSummary.Dock = DockStyle.Fill; resultSummary.Margin = new Padding(0, 2, 0, 4); resultSummary.AutoEllipsis = true;
             details.Name = "InstallerInspectDetails"; details.Dock = DockStyle.Fill; details.Multiline = true; details.ReadOnly = true; details.ScrollBars = ScrollBars.Vertical; details.BackColor = Color.White; details.Visible = false; details.BorderStyle = BorderStyle.FixedSingle;
             result.Controls.Add(resultSummary, 0, 0); result.Controls.Add(details, 0, 1); root.Controls.Add(result, 0, 4);
@@ -147,9 +148,10 @@ namespace SealHdInstaller
             introduction.Text = T("一次安装兼容修复、高清画面与高分辨率支持。", "Compatibility fixes, HD artwork and resolutions in one installer.");
             folderLabel.Text = T("游戏安装目录", "Game installation folder"); browse.Text = T("浏览…", "Browse"); detect.Text = T("重新查找", "Find");
             resolutionLabel.Text = T("游戏分辨率", "Game resolution"); borderless.Text = T("无边框全屏", "Borderless fullscreen");
-            resolutionHelp.Text = T("默认推荐 1080p；更高分辨率会增加显卡负载。", "1080p is the default. Higher resolutions increase GPU workload.");
-            int selected = resolution.SelectedIndex < 0 ? 0 : resolution.SelectedIndex;
-            resolution.Items.Clear(); resolution.Items.AddRange(new object[] { "1920 x 1080", "2560 x 1440", "3840 x 2160" }); resolution.SelectedIndex = selected;
+            resolutionHelp.Text = T("支持 16:9／16:10，默认推荐 1080p。", "16:9 / 16:10 supported. Default: 1080p.");
+            var selected = resolution.SelectedItem as ResolutionProfile ?? ResolutionProfiles.Default;
+            resolution.Items.Clear(); resolution.Items.AddRange(ResolutionProfiles.Ordered.Cast<object>().ToArray());
+            resolution.SelectedItem = ResolutionProfiles.Ordered.FirstOrDefault(p => p.Id == selected.Id) ?? ResolutionProfiles.Default;
             showDetails.Text = showTechnicalDetails ? T("收起检查详情", "Hide check details") : T("查看检查详情", "Show check details");
             restore.Text = T("恢复原文件", "Restore"); close.Text = T("关闭", "Close");
             openBackup.Text = T("查看备份", "Open backup"); openReport.Text = T("安装记录", "Install record");
@@ -242,9 +244,9 @@ namespace SealHdInstaller
         private async Task RunOperation(bool recovering)
         {
             if (busy || directory.Text.Trim().Length == 0) return;
-            string path = directory.Text.Trim(); int profile = Math.Max(0, resolution.SelectedIndex);
-            int[] widths = { 1920, 2560, 3840 }, heights = { 1080, 1440, 2160 };
-            var options = new InstallOptions { GameDirectory = path, Width = widths[profile], Height = heights[profile], Borderless = borderless.Checked, ReplaceConflictingLoader = false };
+            string path = directory.Text.Trim();
+            var profile = resolution.SelectedItem as ResolutionProfile ?? ResolutionProfiles.Default;
+            var options = new InstallOptions { GameDirectory = path, Width = profile.Width, Height = profile.Height, Borderless = borderless.Checked, ReplaceConflictingLoader = false };
             busy = true; completed = false; restored = recovering; ++inspectionVersion; inspecting = false; inspectTimer.Stop();
             int currentOperation = ++operationVersion; progress.Value = 0; backupDirectory = reportPath = null; openBackup.Visible = openReport.Visible = false;
             details.Text = ""; resultSummary.Text = T("正在检查并准备文件…", "Checking and preparing files..."); ApplyLanguage();
