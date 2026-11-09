@@ -6,8 +6,6 @@ Developed and implemented by **OpenAI Codex**. The publisher reviewed the work a
 
 ## Download
 
-The binary release is being prepared with stronger item presets. The current source and table-limit commands are documented below.
-
 Download **[SealSaveEditor.zip from the Save Editor release](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.0)** and extract the complete archive. Run `SealSaveEditor.exe`; keep `SealItemWorker.exe` in the same folder.
 
 No installer or Python installation is required. The application uses the .NET Framework included with Windows 11. GitHub's automatically generated source archives are for building the program; use the attached ZIP to run it directly.
@@ -17,6 +15,7 @@ No installer or Python installation is required. The application uses the .NET F
 - Edit character level, experience, health, energy, money, five-element attributes and verified combat properties.
 - Edit learned skills and their individual components with readable explanations. Shared display names do not merge distinct skill records.
 - Change equipment and crafting-material bonuses, including adding or removing actual bonus records.
+- Apply **Extreme equipment bonuses** for a much stronger item preset, or retain the separate original-table preset.
 - Browse all **657 ordinary item templates**, including hidden equipment, fixed and random bonuses, requirements, sockets and original generation information.
 - **Add new items** to a chosen party member without consuming an existing object.
 - **Replace an item** with another original template, such as changing a staff into iron ore or creating Lan Wei's hidden weapon, Demonic Flame. Generate and review the preview before applying it.
@@ -44,12 +43,21 @@ In **Items & equipment**, select the item and open **Shortcuts**.
 
 | Command | Shortcut | Effect |
 | --- | --- | --- |
-| Add all equipment bonuses at table maxima | `Ctrl+Alt+A` | Adds or raises the 29 supported persistent bonus types using declared original-table maxima. |
+| Extreme equipment bonuses | `Ctrl+Alt+A` | Adds or raises 29 persistent bonus types to the researched extreme preset. |
+| Add all equipment bonuses at table maxima | `Ctrl+Alt+T` | Uses the declared original-table maxima for the same supported types. |
 | Set level and element requirements to 1 | `Ctrl+Alt+1` | Sets both current and base level/elemental-attribute requirements to 1. |
+
+The extreme preset is substantially stronger than the table preset: maximum-health bonus **4,096 vs 600**, attack bonus **4,096 vs 120**, and each of the five defense bonuses **32,768 vs 120**. These are per-item bonuses, not the character's final totals.
+
+Choose **View preset values...** in the same menu to open a read-only comparison of the extreme values, original-table values, units and evidence classifications. See the [complete values and arithmetic limits](extreme-values.md).
 
 Each changed command is one complete Undo/Redo action. Repeating it adds no duplicate preset records or history. Existing higher values and special, elemental, growing, disabled or conditional records are preserved. Dispel, revival, restore-health and restore-energy consumable actions are excluded from permanent bonuses.
 
 These commands change the working copy; **Save with backup** writes the slot. They are available in the item tab, and shortcut handlers reject hidden or modal-disabled editor windows.
+
+"Extreme" is a strong preset, not a claim that every value is the game's absolute maximum. Its six effective limits and 23 operational choices distinguish actual clamps or useful saturation from finite operating values. Resource, regeneration and combat arithmetic was budgeted for seven reinforced equipment slots; existing larger/duplicate bonuses or other modified inputs can exceed that scope. Movement and attack speeds can become very fast.
+
+The character-info panel reads health and energy through signed 16-bit snapshots. The resource budget is seven +4,096 bonuses plus at most 4,095 other maximum-resource points, totaling 32,767. Larger existing totals can wrap in that panel; the preset preserves existing above-profile values. See the [resource boundary and full scope](extreme-values.md).
 
 ## Chinese item names
 
@@ -63,8 +71,8 @@ The editor was tested on Windows 11 with the Steam version-30 EASYRPG/USER save 
 
 - Cross-map relocation and unknown or structured script/model fields remain read-only.
 - The game can recalculate character, skill and conditional values. Editing a displayed description alone does not change the underlying effect.
-- Bonus presets use declared original-table maxima, which are not engine-wide hard limits.
-- The new bulk-bonus preset passed editor/save tests; its complete equipment and combat behavior has not yet had a separate running-game test.
+- The original-table and extreme presets are separate choices. Original generation limits are not engine-wide hard limits, and the extreme preset's operational values are not universal maxima.
+- [Validation](validation.md) distinguishes completed native/arithmetic checks, earlier editor checks and the current extreme-preset verification status.
 - The HD patch and its tooltip-canvas update are separate downloads.
 
 See [validation and evidence limits](validation.md) and [development attribution](ATTRIBUTION.md).

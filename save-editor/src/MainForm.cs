@@ -57,8 +57,10 @@ namespace SealSaveEditor
         private readonly Button addItemButton = new Button();
         private readonly Button quickActionsButton = new Button();
         private readonly ContextMenuStrip quickActionsMenu = new ContextMenuStrip();
+        private readonly ToolStripMenuItem extremeBonusesMenuItem = new ToolStripMenuItem();
         private readonly ToolStripMenuItem maxBonusesMenuItem = new ToolStripMenuItem();
         private readonly ToolStripMenuItem minimumRequirementsMenuItem = new ToolStripMenuItem();
+        private readonly ToolStripMenuItem presetDetailsMenuItem = new ToolStripMenuItem();
         private readonly FieldInspector fieldInspector = new FieldInspector();
         private readonly Button undoButton = new Button();
         private readonly Button redoButton = new Button();
@@ -354,11 +356,16 @@ namespace SealSaveEditor
             replaceItemButton.Click += delegate { ReplaceSelectedItem(); };
             quickActionsButton.Text = "Shortcuts"; quickActionsButton.AutoSize = true;
             quickActionsMenu.Font = UiFonts.Create();
-            maxBonusesMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+A";
+            extremeBonusesMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+A";
+            maxBonusesMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+T";
             minimumRequirementsMenuItem.ShortcutKeyDisplayString = "Ctrl+Alt+1";
+            extremeBonusesMenuItem.Click += delegate { RunItemPreset(2); };
             maxBonusesMenuItem.Click += delegate { RunItemQuickAction(true); };
             minimumRequirementsMenuItem.Click += delegate { RunItemQuickAction(false); };
-            quickActionsMenu.Items.Add(maxBonusesMenuItem); quickActionsMenu.Items.Add(minimumRequirementsMenuItem);
+            presetDetailsMenuItem.Click += delegate { ShowItemPresetDetails(); };
+            quickActionsMenu.Items.Add(extremeBonusesMenuItem); quickActionsMenu.Items.Add(maxBonusesMenuItem);
+            quickActionsMenu.Items.Add(minimumRequirementsMenuItem); quickActionsMenu.Items.Add(new ToolStripSeparator());
+            quickActionsMenu.Items.Add(presetDetailsMenuItem);
             quickActionsButton.Click += delegate { quickActionsMenu.Show(quickActionsButton, new Point(0, quickActionsButton.Height)); };
             itemActions.Controls.Add(addItemButton); itemActions.Controls.Add(replaceItemButton);
             itemActions.Controls.Add(quickActionsButton);
@@ -748,7 +755,12 @@ namespace SealSaveEditor
         }
 
         private void RunItemQuickAction(bool maximumBonuses)
+        { RunItemPreset(maximumBonuses ? 1 : 0); }
+
+        private void RunItemPreset(int profile)
         {
+            bool maximumBonuses = profile != 0;
+            bool extreme = profile == 2;
             ItemRecord item = SelectedItem();
             if (document == null || item == null || items.SelectedItems.Count != 1 || !ApplyInspectorDraft()) return;
             if (maximumBonuses && itemTemplates == null) return;
@@ -756,7 +768,9 @@ namespace SealSaveEditor
             {
                 SaveDocument owner = document;
                 ItemSnapshot before = owner.CaptureItem(item);
-                QuickActionResult result = maximumBonuses ? ItemQuickActions.ApplyMaxBonuses(owner, item, itemTemplates) : null;
+                QuickActionResult result = !maximumBonuses ? null : extreme
+                    ? ItemQuickActions.ApplyExtremeBonuses(owner, item, itemTemplates)
+                    : ItemQuickActions.ApplyMaxBonuses(owner, item, itemTemplates);
                 int changed = maximumBonuses ? result.ChangedCount : ItemQuickActions.SetRequirementsToOne(owner, item);
                 if (changed > 0)
                 {
@@ -765,9 +779,21 @@ namespace SealSaveEditor
                     redo.Clear(); fieldInspector.Bind(null, "", "", catalog, chinese, false);
                     BindItems(); RefreshRecords(); UpdateState();
                 }
-                if (maximumBonuses)
+                if (extreme)
+                    SetStatus(chinese ? (changed == 0 ? "物品已达到本档强化值，未重复添加。" : "已极限强化 " + changed + " 项装备属性；保留已有更高数值和特殊效果。保存后写入存档。") : result.Summary);
+                else if (maximumBonuses)
                     SetStatus(chinese ? (changed == 0 ? "装备属性已达到原表上限，未重复添加。" : "已按原表上限处理 " + changed + " 项装备属性；保留更高数值，略过 " + result.SkippedCount + " 种消耗品使用效果。保存后写入存档。") : result.Summary);
                 else SetStatus(chinese ? (changed == 0 ? "等级要求和五行属性要求已经都是 1。" : "已将当前及基础等级要求、五行属性要求设为 1。保存后写入存档。") : "Current and base level/element requirements are 1. Save to write the slot.");
+            });
+        }
+
+        private void ShowItemPresetDetails()
+        {
+            if (itemTemplates == null) return;
+            TryAction(delegate
+            {
+                using (var dialog = new ItemPresetDetailsDialog(ItemQuickActions.GetExtremeBonuses(itemTemplates), chinese, allFields.Checked))
+                    dialog.ShowDialog(this);
             });
         }
 
@@ -777,7 +803,8 @@ namespace SealSaveEditor
             // Disabled modal owners and hidden forms must not apply item presets.
             if (tabs.SelectedIndex == 2 && Enabled && Visible && IsWindowEnabled(Handle))
             {
-                if (keyData == (Keys.Control | Keys.Alt | Keys.A)) { RunItemQuickAction(true); return true; }
+                if (keyData == (Keys.Control | Keys.Alt | Keys.A)) { RunItemPreset(2); return true; }
+                if (keyData == (Keys.Control | Keys.Alt | Keys.T)) { RunItemQuickAction(true); return true; }
                 if (keyData == (Keys.Control | Keys.Alt | Keys.D1)) { RunItemQuickAction(false); return true; }
             }
             return base.ProcessCmdKey(ref message, keyData);
@@ -838,8 +865,10 @@ namespace SealSaveEditor
         {
             if (fieldSearch.IsHandleCreated) SendMessage(fieldSearch.Handle, 0x1501, new IntPtr(1), chinese ? "搜索项目或数值" : "Search properties or values");
             allFields.Text = chinese ? "高级字段" : "Advanced fields";
-            maxBonusesMenuItem.Text = chinese ? "一键添加全部装备属性（顶格）" : "Add all equipment bonuses at table maxima";
+            extremeBonusesMenuItem.Text = chinese ? "一键极限强化（强力属性）" : "Extreme equipment bonuses";
+            maxBonusesMenuItem.Text = chinese ? "添加全部装备属性（原表上限）" : "Add all equipment bonuses at table maxima";
             minimumRequirementsMenuItem.Text = chinese ? "等级、五行属性要求设为 1" : "Set level and element requirements to 1";
+            presetDetailsMenuItem.Text = chinese ? "查看强化数值对照…" : "View preset values...";
             if (items.Columns.Count >= 3)
             {
                 items.Columns[0].Text = chinese ? "物品" : "Item";
@@ -1229,8 +1258,10 @@ namespace SealSaveEditor
             addItemButton.Enabled = loaded && document.Characters.Count > 0 && itemTemplates != null;
             replaceItemButton.Enabled = loaded && selectedItem != null && itemTemplates != null;
             quickActionsButton.Enabled = loaded && selectedItem != null && items.SelectedItems.Count == 1;
+            extremeBonusesMenuItem.Enabled = quickActionsButton.Enabled && itemTemplates != null;
             maxBonusesMenuItem.Enabled = quickActionsButton.Enabled && itemTemplates != null;
             minimumRequirementsMenuItem.Enabled = quickActionsButton.Enabled;
+            presetDetailsMenuItem.Enabled = itemTemplates != null;
             removeModifierButton.Enabled = loaded && selectedItem != null && fieldInspector.Field != null && fieldInspector.Field.Modifier != null && selectedItem.Modifiers.Contains(fieldInspector.Field.Modifier);
             if (!loaded) { summary.Text = "Open a save to inspect its characters, items, skills and location."; return; }
             subtitle.Text = Path.GetFileName(document.FilePath) + "  |  " + document.Characters.Count + (chinese ? " 位队伍人物  |  " : " party members  |  ") + document.Items.Count + (chinese ? " 件物品" : " items");

@@ -9,7 +9,7 @@ Play the Steam version of **Seal of Evil** on **Windows 11**, with **1080p, 1440
 | Download | What it does |
 | --- | --- |
 | **[HD Patch v0.23](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.23)** | Full installation package: Windows 11 startup compatibility, high resolutions, enhanced artwork, and the tooltip fix. Download `SealHD_v0.23.zip`. |
-| **[Save Editor source and manual](save-editor/README.md)** | Optional character, skill and item editor. A download release with stronger item presets is being prepared. |
+| **[Save Editor](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.0)** | Character, skill and item editing, native item generation, and strong equipment presets. Download `SealSaveEditor.zip`. |
 
 Download the application ZIP attached to the relevant release. GitHub's automatic **Source code** archives are not the ready-to-run installation packages.
 

@@ -30,7 +30,7 @@ An independent audit passed 8,149 checks. All 657 native names, exact aliases, I
 
 Actual Chinese/English GUI tests checked inventory and catalog searches, language switching without dirtying saves, and item generation without replacing native names with reference translations.
 
-## Bulk item presets
+## Original-table item preset and requirements
 
 The bulk-action backend suite passed **3,888 assertions**. It checked all 29 persistent effect limits and source rules, four excluded consumable actions, preservation of special/elemental/growing/disabled/conditional records, existing higher values and duplicate records, save/reload idempotence, four requirements, description-cache invalidation, foreign-document rejection, 16 KiB serialization-overflow rollback and byte-identical undo.
 
@@ -48,9 +48,32 @@ An independent parser validated all 280 objects in the resulting save. Exactly o
 
 Separate isolated-game checks loaded files written by the real editor GUI. Observed results included changed money and skill rank, a template-generated Demonic Flame with the expected regenerated tooltip, and independently added iron ore and a hidden helm in the selected characters' bags. These checks establish loading, inventory display and the demonstrated tooltip values. They do not establish every template's combat effects, all equipment restrictions or every save/reload cycle.
 
-The new bulk-bonus and minimum-requirement presets have not yet had a separate running-game equipment/combat test. Their editor behavior and serialized persistence were verified as described above. Character, skill and conditional values can still be recalculated by the game.
+The earlier table-preset checks above establish editor behavior and serialized persistence. Character, skill and conditional values can still be recalculated by the game. The current extreme-preset runtime status is recorded separately below.
 
 The separately supplied HD tooltip-canvas update corrected the reproduced high-resolution lower-HUD tooltip corruption and multi-second frame-submission stalls. Controlled 1080p, 1440p and 4K tests verified canvas geometry and visible tooltip results. Those were CPU call/Present timestamps and screenshot checks, not physical display latency or a general performance guarantee. The tested 4K renderer still had approximately 100 ms frame intervals. The save editor does not install that renderer update.
+
+## Extreme preset: native and arithmetic evidence
+
+The extreme preset was derived from the supported original engine and client consumers, rather than treating generation-table annotations as global limits. [The values document](extreme-values.md) records the selected numbers, units, effective caps, operating assumptions, binary hashes and relevant function RVAs without redistributing original game data.
+
+The corrected core review passed **11 engine-instruction guards, two client-resource snapshot guards, 19 budget checks and six resource-boundary regression checks**. These covered seven-slot resource/regeneration and kill-restoration products, signed-16 maximum-resource/rating paths, fury gain, five defenses, fixed reduction and a combined attack/skill/element/critical/frozen/impact/world/reflection budget. They verified that the modeled signed-32 intermediates stayed within range under the stated assumptions.
+
+Actual clone testing rejected an earlier +65,536 HP/energy candidate: the character panel showed maxima of 240/100 for edited totals of 65,776/65,636. Subsequent inspection found separate packed character-info snapshot reads that sign-extend 16-bit maxima, despite a different actor-update packet carrying full DWORD HP. The final resource bonus is +4,096 per item, allowing seven copies plus up to 4,095 other maximum-resource points without crossing 32,767. The failed candidate and signed-boundary examples are retained as regressions, not reported as working values. Existing above-profile bonuses are intentionally preserved, so retesting starts from a fresh fixture.
+
+Consumer analysis also distinguished actual percentage clamps and refill saturation from operational choices. The operational values do not establish a global maximum or guarantee arbitrary prior cheats, duplicated stronger effects, edited skills/enemies or two modified PvP opponents. Existing stronger and special records are intentionally preserved. Speeds may be very fast.
+
+The complementary probability/speed model passed **16 arithmetic checks**, covering chance saturation, the 50% absolute-evasion clamp, signed speed/rating transport, movement/timing math, status duration/resistance products and a reflection-overflow counterexample. The frozen profile classifies six entries as effective limits and 23 as operational choices, with no original-table fallback. Chance coefficients are identified separately from final probabilities.
+
+These are static native-instruction and arithmetic results. They do not establish actual editor interaction, successful game loading, equipment activation, visible character totals or combat outcomes.
+
+### Current extreme-preset verification status
+
+- **Backend/save checks:** the corrected final preset passed 315 backend assertions. Independent binary parsing checked all 280 objects in its output: only the selected item changed; the other 279 payloads and 278 unrelated subtrees were byte-identical. Original native modifiers were retained, all 29 neutral values matched the preset, requirements were 1, and complete Undo restored the original GAM/USE bytes. Earlier original-table results above remain separate.
+- **Actual GUI and read-only value comparison:** the final corrected-source WinForms run passed 203 assertions on a separate desktop. It exercised the real menus, all three command handlers, the 29-row read-only comparison, modal/hidden/tab guards, complete Undo/Redo, idempotence, actual Save with backup and independent reopening. Keyboard handlers were dispatched through reflection; physical keyboard delivery was not simulated.
+- **Running-game load/equipped character check:** a fresh fixture written by that final GUI run was loaded in the isolated game. Liang Hu's already-equipped Paw displayed maximum health **4,336**, maximum energy **4,196**, attack **4,134**, all five defenses **32,770**, accuracy **2,113** and evasion **2,086**. The resource maxima were readable and positive, with no earlier 16-bit wrap. Movement using the unchanged strong speed values was also exercised in a separate isolated run. The game was closed normally. These observations establish the demonstrated load, equipment activation, displayed totals and movement, rather than every possible effect or frame-rate claim.
+- **Combat coverage:** no complete all-29-effect combat test is claimed.
+
+The tested source uses the corrected +4,096 resource values. Earlier +65,536 candidate captures are failure evidence and were not used as a final acceptance pass.
 
 ## Remaining boundaries
 
@@ -58,4 +81,4 @@ The separately supplied HD tooltip-canvas update corrected the reproduced high-r
 - Native item generation requires the verified installed engine build.
 - Cross-map relocation and unverified structured fields remain read-only.
 - Editing a cached description is separate from changing an actual effect.
-- Broader runtime, hardware and complete bulk-preset combat coverage remain outside the evidence above.
+- Broader runtime, hardware and complete all-effect combat coverage remain outside the evidence above.
