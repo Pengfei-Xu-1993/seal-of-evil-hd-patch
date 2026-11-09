@@ -16,9 +16,13 @@ Project records distinguish static file checks, isolated installer tests, and ac
 
 The save editor has separate save-format, GUI, backup, catalog, native-generation and round-trip checks. Isolated running-game checks demonstrated edited money and skill rank, a replaced hidden weapon, and added items with regenerated tooltips. The final extreme item preset passed GUI and save/reload tests and an isolated equipped-character check with the expected attack, five defenses and corrected resource maxima. An earlier resource value was rejected after a client display wrap was observed. Full combined combat behavior across all 29 effects has not been separately verified. See [save-editor validation](save-editor/validation.md).
 
-## Complete installer beta
+## Complete graphical installer and scene animation
 
-Codex implemented the graphical C# installer, app-local movie-graph probe, targeted compatibility-setting handling, and presentation-path fallback. The project owner only reviews and approves the work. The beta preserves the audited EXE unchanged and has separate [portability validation](docs/portability-beta-validation.md). Remote Intel hardware and the final elevated/UAC installation flow remain unverified; missing IV50 support results in explicitly disclosed video skipping, not complete original-movie decoding.
+Codex implemented the graphical C# installer, app-local movie-graph probe, targeted compatibility-setting handling, and presentation-path fallback. The project owner only reviews and approves the work. The v0.26 installer is the validated complete-animation EXE renamed without recompilation; its implementation and recorded hashes are included in the release source.
+
+Codex also implemented the shared 18-mode resolution catalog and reconstructed main-menu animation from original frame sequences in each player's installation. Five original cauldron frames drive lower and side flames and steam; nine original environment frames drive local light changes and measured curtain movement. The HD artwork stays in place, with localized effects rather than the original low-resolution scene being placed over it. This is a reconstruction, not a physical lighting simulation or a pixel-identical reproduction of the original composition.
+
+The [current release validation](docs/resolution-scene-candidate.md) distinguishes actual game execution and recorded frames from installer fixtures and GPU readback checks. The user reported that the earlier beta worked on the other computer; the expanded-animation release has not been independently validated there. The final elevated/UAC double-click flow also remains unverified end to end. Missing IV50 support results in explicitly disclosed video skipping with original files preserved, not complete original-movie decoding. The earlier [portability audit](docs/portability-beta-validation.md) remains available as historical evidence.
 
 ## Save-editor names and game data
 

@@ -1,94 +1,110 @@
-Seal of Evil HD Patch v0.24
+Seal of Evil HD Patch v0.26
 
-A Windows 11 startup compatibility fix for the supported Steam edition, with
-1080p, 1440p (2K), 4K, borderless fullscreen and enhanced opening/main-menu art.
-Developed and implemented with OpenAI Codex. The publisher only reviewed the work
-and did not write the code.
+A complete graphical installer for Windows 11 compatibility improvements,
+18 resolution choices, borderless fullscreen, HD opening/menu artwork, and
+original-frame-driven main-menu animation.
 
-FEATURES
+Developed and implemented by OpenAI Codex. The project owner only reviews
+and approves the work and did not write the code.
 
-- Fixes the legacy display-mode startup problem on Windows 11 without requiring
-  Windows compatibility mode or the 640x480 compatibility setting.
-- Adds actual 1920x1080, 2560x1440 and 3840x2160 rendering options to the game.
-  The original 800x600 and 1024x768 options remain available.
-- Provides borderless fullscreen, adapted mouse positioning and centered menus.
-- Includes a widescreen main-menu remaster, an enhanced opening title and three
-  opening brand cards, supplied as five 3840x2160 PNG files.
-- Fixes corrupted green/purple/striped skill-tooltip backgrounds and multi-second
-  hover freezes caused by the old fixed-size background canvas. Both initial
-  creation and resolution resets now use the selected render size, retaining
-  the original translucent background.
+DOWNLOAD AND INSTALL
 
-- Keeps owned overwrite-save confirmations over the fullscreen game instead of minimizing to the desktop.
+1. Close the game.
+2. Download SealHDSetup.exe from:
+   https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.26
+3. Run the EXE and allow Windows administrator permission when requested.
+4. Select the game folder containing SOE.EXE. Steam library folders are
+   detected automatically; Browse can select another location.
+5. Choose a resolution and install. The default is 1920x1080.
+6. Start the game normally through Steam.
 
-INSTALL
+The EXE contains all HD-patch components. No earlier package, separate
+update, CMD, or PowerShell commands are required. The interface supports
+Chinese and English. An unknown input loader receives one backup-and-replace
+confirmation; installation checks the supported game files before writing.
 
-1. Exit Seal of Evil and extract this complete archive.
-2. Double-click Install.cmd. The preset game directory is
-   D:\Steam\steamapps\common\Seal of Evil; other Steam libraries are not
-   discovered automatically. Use the command below for another location.
-3. Start the game normally through Steam.
+UPDATING AND TEMPORARY DIAGNOSTIC SETTINGS
 
-From PowerShell in the extracted package folder:
+Use the same EXE to update an existing installation. Select the desired
+resolution again. The installer preserves its first-install backup history
+and does not manage saved games.
 
-.\Install.cmd -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil"
+Installation sets [Assets] MainMenu=1, replacing the temporary MainMenu=0
+workaround. Manually renamed movie files are not renamed automatically.
+If Movie\Start.dat.SealHD-disabled exists and Start.dat does not, rename it
+back to Start.dat after installation. Do not overwrite an existing Start.dat.
 
-This is the complete installation package, including the artwork and dgVoodoo
-presentation components. GitHub's automatically generated Source code archives
-do not provide an installed payload.
+ORIGINAL VIDEOS
 
-UPGRADING AN EXISTING HD INSTALLATION
+If IV50 decoding is unavailable, the original opening and ending videos are
+skipped automatically; their files are preserved. No decoder is bundled or
+installed. The enhanced static opening screens are a separate feature.
 
-The full installer reapplies display settings and defaults to 1920x1080. To keep
-your existing HD resolution/configuration, use the separate SealHD-DialogFix.zip
-update instead; it replaces the proxy DLL and refreshes its uninstall record. Existing users can also pass
--Width 2560 -Height 1440 (or -Width 3840 -Height 2160) to this full installer.
-Upgrades retain the original first-install backup. Saved games are not managed
-by this installer.
+RESOLUTIONS
 
-RESOLUTION AND RESTORATION
+The installer and Options > Screen Resolution share these modes:
 
-In Options > Screen Resolution, select a size with the left/right controls.
-OK applies and saves it; Cancel preserves the current selection. Higher render
-resolutions can be slower. The default is 1080p.
+Original 4:3:
+800x600, 1024x768
 
-To set a profile while the game is closed:
+16:9 and common near-16:9 displays:
+1280x720, 1360x768, 1366x768, 1536x864, 1600x900,
+1920x1080, 2560x1440, 3840x2160
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Manage-SealHD.ps1 -Action Resolution -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil" -Width 2560 -Height 1440
+16:10:
+1280x800, 1440x900, 1600x1000, 1680x1050, 1920x1200,
+2560x1600, 2880x1800, 3840x2400
 
-To uninstall and restore the recorded files from before the first installation:
+Use the left/right game controls to select a size. OK applies and saves it;
+Cancel preserves the applied selection. Existing profile IDs remain stable.
+Higher resolutions increase the old renderer's workload; start with 1080p.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Manage-SealHD.ps1 -Action Uninstall -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil"
+MAIN-MENU ANIMATION
 
-The backup stays in the game's SealHD-backup folder. Newly installed files that
-have since been independently modified are preserved and reported by uninstall.
+The patch uses original frame sequences from the player's installation to
+reconstruct lower and side fire, rising steam, curtain movement, and local
+firelight on nearby objects while retaining the HD textures. It is not a
+physical lighting simulation or a pixel-identical reproduction of the
+original composition. [Assets] FireAnimation=0 keeps the HD scene static.
+
+RESTORE
+
+Close the game, run SealHDSetup.exe, select the same folder, and choose
+Restore original files. The installer restores its recorded original files
+and game-specific compatibility settings. Saved games are preserved.
+Backups remain in SealHD-installer-backups. Later independent file or
+compatibility-setting changes are preserved and reported instead of being
+silently overwritten.
 
 SUPPORTED GAME BUILD
 
-The installer requires these SHA256 values for the original game files:
+You need your own supported Steam installation. The original supported hashes
+include:
 
 SOE.EXE
 452B135E827B11520564BD07A789542D19CB63CCAF0AE93FEA53248537D8C00B
 
+ERRelive.dll
+B22AD4D0630D39B4E376EEF3EFDDFE7EE363823AE0CB15AE41DE6BEFB2E8126F
+
 Gfx3d.dll
 1B93A54C2F3086C509B2B81AF0B863E6CB36EF96F9CE94DF9814FFAD202CD078
 
-Other builds have not been verified. Original game executables, game data tables
-and saved games are not included.
+The installer also recognizes its own recorded manifest-patched executable.
+Other builds have not been verified. No vendor game executable, original
+movies, game data tables, or user saves are distributed.
 
-ARTWORK AND SOURCE
+ARTWORK, SOURCE, AND VALIDATION
 
-The remaster targets the original central composition and details, with sparse
-widescreen extensions and removal of the main menu's red demo label. The title
-retains the original three hanging ornaments. The five 3840x2160 files are 4K
-exports of ImageGen edits: four generated originals are 1672x941 and the title
-original is 1671x941, resampled with high-quality bicubic interpolation.
-See provenance/artwork-prompts.txt and provenance/artwork-manifest.json.
+The five 3840x2160 artwork files are exports of ImageGen edits. Their generated
+source images were approximately 1672x941 and were resampled to the delivered
+4K dimensions. See provenance/, AI_DISCLOSURE.md, and THIRD_PARTY.md.
 
-source/build.cmd builds the x86 proxy with Visual Studio 2022 C++ Build Tools
-and the Windows SDK. Adjust its standard toolchain path if necessary. The source
-matches the tested tooltip-fix build; no diagnostic hooks or trace recorder are
-included. See validation.txt, AI_DISCLOSURE.txt and ThirdParty.txt.
+The matching source is included in the v0.26 tag. GitHub's automatic Source
+code archives are for developers, not the installed HD payload. Build steps
+are in installer/README.md; validation and limits are in
+docs/resolution-scene-candidate.md.
 
-manifest.json records file sizes and hashes. SHA256SUMS.txt additionally covers
-the manifest. The ZIP's separate .sha256 file verifies the downloaded archive.
+Released SealHDSetup.exe: 48,012,288 bytes
+SHA256:
+E41845600EC704AEBBF90BF311B9C0E31EF38C21BE2971BA28AF8A63D906F9F4

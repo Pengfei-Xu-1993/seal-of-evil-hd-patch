@@ -1,0 +1,103 @@
+{
+  "Tag": "v0.26",
+  "Channel": "stable",
+  "Installer": {
+    "Name": "SealHDSetup.exe",
+    "Bytes": 48012288,
+    "Sha256": "E41845600EC704AEBBF90BF311B9C0E31EF38C21BE2971BA28AF8A63D906F9F4",
+    "DownloadUrl": "https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/download/v0.26/SealHDSetup.exe"
+  },
+  "NativeProxySha256": "0CF6800218B921B1949C27F689D9F3B2DFF483A4F1AAC28691A619AF06564E03",
+  "PayloadSha256": "AC7BEF898C4B6CA5462A6B2104779E6716AF0B0575EB44978AF0BD541197D1A5",
+  "SourceInputs": [
+    {
+      "Path": "source/dinput8.cpp",
+      "Sha256": "B74BC8E22572CA73E2E12EFB6FBAB767D8226903317C17B789A1A436D054C9F9"
+    },
+    {
+      "Path": "source/dinput8.def",
+      "Sha256": "C81007375376A1139AD631FFA33BF5ACC0E5ECD75E4293077664765CEC85AFB0"
+    },
+    {
+      "Path": "source/native_resolution.h",
+      "Sha256": "B2268DBA7C0CE40FE9A5C2CA1FF164AB2A93973BEC86D1AC96B66B1BDFDFD8E0"
+    },
+    {
+      "Path": "source/hd_intro.h",
+      "Sha256": "D5AD84ACAF7E3BEA61B0D17B645EC9FDAEE506DE943BD06FAB2C749C1919F1BC"
+    },
+    {
+      "Path": "source/hd_assets.h",
+      "Sha256": "54EC763CFA41F2F6A83A7458C73D4BFF2F28793C72FD7061D550C02B1BCE1EFD"
+    },
+    {
+      "Path": "source/movie_guard.h",
+      "Sha256": "463EA42DEC6BE121605444A2032A40DB8FAD7944EBD7A3D2A9005674532F09EE"
+    },
+    {
+      "Path": "source/resolution_profiles.h",
+      "Sha256": "DB883CC80F146BEEE6F32D1C8EC21BC614B153FFF6FEDF4304D143EE5074379C"
+    },
+    {
+      "Path": "source/SealHD.ini",
+      "Sha256": "85A2901B6675B1B1BA297EA42B0A42E9641CD42AC30AFB92DF85FB2025E2120C"
+    },
+    {
+      "Path": "installer/native/SealVideoProbe.cs",
+      "Sha256": "A8207DC31FE0055186BE4874CC20B8E359667155D3DD4E746202BDA752D1B5DC"
+    },
+    {
+      "Path": "installer/installer.manifest",
+      "Sha256": "7AD472227763446C18E0B0A3A3184D0EE02384099CA95AC2313D981287D06FB9"
+    },
+    {
+      "Path": "installer/assets/SealHD.ico",
+      "Sha256": "1BDEA7A95C827B44A82015CB3322D84D2B9E141005682B7EA757273492950AD6"
+    },
+    {
+      "Path": "config/resolutions.json",
+      "Sha256": "A49926B7D58D42DCCFC2196A673546162912EF2907AA8CA5C18DA6728199CCFC"
+    },
+    {
+      "Path": "config/dgVoodoo.conf",
+      "Sha256": "15F7657D8A679315B44AC00AEEE434624FE45F94863C8FFB3875D3C29D334C56"
+    },
+    {
+      "Path": "installer/src/CompatibilityLayers.cs",
+      "Sha256": "578EDE341D91C752BE79D5ACF3D364257166D6436AAFD59E5F5E8E35D6C54734"
+    },
+    {
+      "Path": "installer/src/InstallerConfig.cs",
+      "Sha256": "BD574892D6C4B97AF16F7FE8DEFC7D330C776DD8A658509132EAB4CFD5F2DFAB"
+    },
+    {
+      "Path": "installer/src/InstallerCore.cs",
+      "Sha256": "1387C666108606F80C5F6B9C83DF1B95C9EF248AF5F64A143ED1DCFD5274D9E3"
+    },
+    {
+      "Path": "installer/src/InstallerFiles.cs",
+      "Sha256": "D5904CD49261EC1F846B8DBA80E1D0534200C779B2A02DA7DD7738024D622A52"
+    },
+    {
+      "Path": "installer/src/InstallerForm.cs",
+      "Sha256": "4CA6D747A91952B3C88480385690ABFC402667F1231706F06CDB823D8666313C"
+    },
+    {
+      "Path": "installer/src/ManifestEditor.cs",
+      "Sha256": "085201F3DA806790A143FA22D87D2A06ADCFC1D81893159BE084ACC4C45A2CE8"
+    },
+    {
+      "Path": "installer/src/Program.cs",
+      "Sha256": "EB13837FF1B12931B28E6F7BE67B88564F8850342826576E1EDB7100671DD55F"
+    },
+    {
+      "Path": "installer/src/ResolutionProfiles.cs",
+      "Sha256": "4C1B587930AE6CB6A68F0E6BE5ABAFA9669C2E0DED4311D413A3A958D7A0269F"
+    },
+    {
+      "Path": "installer/src/UiFonts.cs",
+      "Sha256": "4FF040EA92EF91AC59DB19493E381C24E60731255C5513963A1B18665458A52D"
+    }
+  ],
+  "Provenance": "The tested complete-animation installer was copied byte-for-byte to SealHDSetup.exe. Internal 0.25-local native-log and 0.26-resolution-candidate payload labels are retained; they do not indicate an older DLL. This manifest is the authoritative v0.26 artifact inventory."
+}

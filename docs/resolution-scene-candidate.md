@@ -1,6 +1,6 @@
-# Expanded resolutions and original scene-animation candidate
+# v0.26 resolution and scene-animation validation
 
-This is a local candidate prepared after v0.25-beta.1. It has not been published as a stable release. The existing GitHub test release remains unchanged.
+The v0.26 release publishes the validated complete-animation installer unchanged, renamed to `SealHDSetup.exe`. The earlier v0.25-beta.1 artifacts remain available separately. This record distinguishes representative actual-game tests, installer fixtures, and GPU/pixel analysis from untested workflows.
 
 ## Resolutions
 
@@ -35,14 +35,14 @@ Actual local game execution verified successful world backbuffer changes to 1366
 
 Original artwork was observed in an isolated game with HD menu substitution disabled, and its five- and nine-frame sequences were independently inspected. The final animation was then recorded in the actual local game. GPU readback tests separately verified effect bounds, UI occlusion, fixed curtain anchors, pipeline-state restoration and static fallbacks. Per-pixel assertions are not counted as separate gameplay scenarios.
 
-The final graphical installer was inspected without execution to verify its embedded payload, x86 GUI subsystem and administrator manifest. An isolated actual installer service install/inspect/restore cycle restored all 14 managed paths. The final elevated/UAC double-click path has not been tested end to end. The user reported that the earlier beta worked on the other computer; this expanded-animation candidate has not yet been tested there.
+The final graphical installer was inspected without execution to verify its embedded payload, x86 GUI subsystem and administrator manifest. An isolated actual installer service install/inspect/restore cycle restored all 14 managed paths. The final elevated/UAC double-click path has not been tested end to end. The user reported that the earlier beta worked on the other computer; this expanded-animation release has not been independently tested there.
 
-## Candidate identities
+## Released artifact identities
 
 | Artifact | SHA256 |
 | --- | --- |
-| Complete installer `SealHDSetup-Complete-Animation-Test.exe` | `E41845600EC704AEBBF90BF311B9C0E31EF38C21BE2971BA28AF8A63D906F9F4` |
+| Complete installer `SealHDSetup.exe` | `E41845600EC704AEBBF90BF311B9C0E31EF38C21BE2971BA28AF8A63D906F9F4` |
 | Embedded native proxy | `0CF6800218B921B1949C27F689D9F3B2DFF483A4F1AAC28691A619AF06564E03` |
 | Embedded payload ZIP | `AC7BEF898C4B6CA5462A6B2104779E6716AF0B0575EB44978AF0BD541197D1A5` |
 
-The previous compatibility manifest, targeted color-mitigation handling, unsupported-IV50 movie fallback, tooltips and confirmation fixes are retained. Missing IV50 support still causes original opening/ending videos to be skipped with their files preserved; this candidate does not add a decoder.
+The previous compatibility manifest, targeted color-mitigation handling, unsupported-IV50 movie fallback, tooltips and confirmation fixes are retained. Missing IV50 support still causes original opening/ending videos to be skipped with their files preserved; this release does not add a decoder.

@@ -1,5 +1,5 @@
 {
-  "Status": "Unpublished local candidate",
+  "Status": "Promoted unchanged to v0.26; see manifest-v0.26.json for the published filename",
   "Installer": {
     "Name": "SealHDSetup-Complete-Animation-Test.exe",
     "Bytes": 48012288,
