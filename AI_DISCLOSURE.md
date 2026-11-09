@@ -10,9 +10,15 @@ The publisher reviewed the work and authorized publication, including reviewing 
 
 ## Codex's contribution
 
-Codex implemented the C++ proxy DLL, display and input adaptation, enhanced-art presentation, PowerShell installation and restoration scripts, configuration, build process, packaging, and documentation. Codex also operated the game for testing, examined runtime logs and process state, and checked installation, uninstall, backup, and release-file hashes. The source and scripts contain AI-written and AI-modified content.
+Codex implemented the C++ proxy DLL, display and input adaptation, enhanced-art presentation, PowerShell installation and restoration scripts, configuration, build process, packaging, and documentation. Codex also implemented the C# save editor, paired-save storage, item catalog reader, native item-generation worker, Chinese reference-name presentation and bulk item presets. Codex operated the game for testing, examined runtime logs and process state, and checked installation, uninstall, backup, and release-file hashes. The source and scripts contain AI-written and AI-modified content.
 
-Project records distinguish static file checks, isolated installer tests, and actual game execution. v0.22 Steam testing covered main-menu startup, overlay opening and closing, returned-menu input, and exit. World-resolution and input evidence comes from v0.21 direct-launch testing; a Steam-launched world session has not been separately retested. See [docs/validation.txt](docs/validation.txt).
+Project records distinguish static file checks, isolated installer tests, and actual game execution. Earlier Steam testing covered main-menu startup, overlay opening and closing, returned-menu input, and exit. Direct-launch game tests covered world resolution changes, input and fullscreen menus. The tooltip-canvas correction was tested in isolated game sessions at 1080p, 1440p and 4K, followed by a production-DLL visual check at 1440p. These new world tests were direct launches, not a separate Steam-launched world acceptance test. See [HD validation](docs/validation.txt).
+
+The save editor has separate save-format, GUI, backup, catalog, native-generation and round-trip checks. Isolated running-game checks demonstrated edited money and skill rank, a replaced hidden weapon, and added items with regenerated tooltips. The new bulk item presets passed GUI and save/reload tests; their combined combat effects have not had a separate running-game verification. See [save-editor validation](save-editor/validation.md).
+
+## Save-editor names and game data
+
+The editor reads definitions from the user's own installation. Its Chinese display names combine reviewed annotations with explicitly labeled reference translations; these are not claimed to reproduce an official Chinese localization. Original aliases, IDs and stored English names remain unchanged. The separate native item worker loads the verified installed engine; that engine and the original data tables are not distributed with the editor. No user saves or private reference-project files are included.
 
 ## ImageGen and 4K exports
 

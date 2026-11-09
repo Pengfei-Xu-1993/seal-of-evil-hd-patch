@@ -2,3 +2,7 @@
 source/* -text
 packaging/* -text
 config/* -text
+save-editor/src/* -text
+save-editor/native/* -text
+save-editor/build.ps1 -text
+save-editor/editor.manifest -text

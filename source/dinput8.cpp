@@ -1086,7 +1086,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
         strcat_s(path, "SealHD.log");
         logFile = CreateFileA(path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
             nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        Log("SealHD proxy 0.22 x86 started");
+        Log("SealHD proxy 0.23 x86 started (tooltip canvas fix)");
         strcpy_s(path, gameDirectory);
         strcat_s(path, "SealHD.ini");
         strcpy_s(patchConfigPath, path);

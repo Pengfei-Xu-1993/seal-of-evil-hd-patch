@@ -1,0 +1,58 @@
+Seal of Evil HD Patch - Tooltip Fix Validation
+Reviewed: 2026-11-08
+
+PRODUCTION SMOKE CHECK
+
+The production DLL was checked separately from the instrumented timing build.
+Both 1440p lower-HUD first/repeat hover screenshots show a readable Fire Cantrip
+tooltip, normal text colors and the original dark translucent background, with
+no striped/mottled fill. The runtime log identifies SealHD proxy 0.23, confirms
+2560x1440, contains no diagnostic/opaque/trace messages and ends in process detach.
+The tested DLL and packaged payload are identical (186880 bytes):
+SHA256 64465DCD2D60CBE617EB3D0C2133264584D9EA882705D824C36EDB870E91A34B
+
+This production build does not produce hover telemetry. The smoke script's
+missing-trace result is expected; it is not reported as a completed trace test.
+Production evidence here is the screenshots, runtime log and matching DLL hash.
+
+INSTRUMENTED RUNTIME CHECKS
+
+Separate diagnostic runs covered first/repeat/different skill-panel hovers and
+first/repeat lower-HUD skill hovers at all three actual render resolutions:
+
+Render size    Source/scratch pitch    Complete rows    Bottom first / repeat
+1920x1080      3840 bytes              132693           81.13 / 58.50 ms
+2560x1440      5120 bytes              101584           38.89 / 39.48 ms
+3840x2160      7680 bytes               63578          105.70 / 85.41 ms
+
+Response times above run from recorded WM_MOUSEMOVE to the next D3D8 Present
+entry after the target tooltip background draw. They are CPU QPC measurements,
+not GPU completion, physical scanout or input-to-photon measurements.
+
+Every CSV contained its full expected row count, with zero dropped events or
+unfinished scopes. Source and scratch bitmaps matched the selected render size;
+all observed tooltip rectangles stayed within their bounds. Native transparency
+remained enabled (flag 1), and pixel/storage/hardware selectors remained 16.
+All 1207 / 833 / 355 observed background shade-and-blit pairs returned normally
+at 1080p / 1440p / 4K. Screenshots also confirmed clean backgrounds and text.
+
+The uncorrected 1440p case retained a 1024x768 scratch bitmap and reproduced
+4.67-second frame-submission gaps on both first and repeated bottom hovers.
+The corrected case reduced those responses to about 39 ms without making the
+tooltip opaque. Complete recovered baseline data were used; an earlier partial
+CSV copy was excluded from bottom-hover timing claims.
+
+LIMITS
+
+This fixes the separate tooltip fault, not general 4K rendering performance.
+On this machine 4K world Present-entry intervals remained about 100 ms (roughly
+10 submissions per second): away/hover medians were 100.70 / 100.74 ms. No tested
+resolution had a world interval of 500 ms or more after the fix. Smooth 4K FPS is
+not claimed. The physical display was 2560x1600; the 4K profile actually rendered
+3840x2160 and was scaled into the letterboxed display viewport.
+
+Coverage is the controlled skill-panel and lower-HUD scenario above, not every
+game screen, map or hardware configuration. Full local evidence is recorded in
+work/seal-diagnosis/research-hover-fix/runtime-profile-audit.json and the associated
+trace/phase summaries. Production screenshots are production-1440p-bottom-first.png
+and production-1440p-bottom-repeat.png under work/save-editor.

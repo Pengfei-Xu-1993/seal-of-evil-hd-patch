@@ -1,0 +1,92 @@
+Seal of Evil HD Patch v0.23
+
+A Windows 11 startup compatibility fix for the supported Steam edition, with
+1080p, 1440p (2K), 4K, borderless fullscreen and enhanced opening/main-menu art.
+Developed and implemented with OpenAI Codex. The publisher only reviewed the work
+and did not write the code.
+
+FEATURES
+
+- Fixes the legacy display-mode startup problem on Windows 11 without requiring
+  Windows compatibility mode or the 640x480 compatibility setting.
+- Adds actual 1920x1080, 2560x1440 and 3840x2160 rendering options to the game.
+  The original 800x600 and 1024x768 options remain available.
+- Provides borderless fullscreen, adapted mouse positioning and centered menus.
+- Includes a widescreen main-menu remaster, an enhanced opening title and three
+  opening brand cards, supplied as five 3840x2160 PNG files.
+- Fixes corrupted green/purple/striped skill-tooltip backgrounds and multi-second
+  hover freezes caused by the old fixed-size background canvas. Both initial
+  creation and resolution resets now use the selected render size, retaining
+  the original translucent background.
+
+INSTALL
+
+1. Exit Seal of Evil and extract this complete archive.
+2. Double-click Install.cmd. The preset game directory is
+   D:\Steam\steamapps\common\Seal of Evil; other Steam libraries are not
+   discovered automatically. Use the command below for another location.
+3. Start the game normally through Steam.
+
+From PowerShell in the extracted package folder:
+
+.\Install.cmd -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil"
+
+This is the complete installation package, including the artwork and dgVoodoo
+presentation components. GitHub's automatically generated Source code archives
+do not provide an installed payload.
+
+UPGRADING AN EXISTING HD INSTALLATION
+
+The full installer reapplies display settings and defaults to 1920x1080. To keep
+your existing HD resolution/configuration, use the separate SealHD-TooltipFix.zip
+update instead; it replaces only the proxy DLL. Existing users can also pass
+-Width 2560 -Height 1440 (or -Width 3840 -Height 2160) to this full installer.
+Upgrades retain the original first-install backup. Saved games are not managed
+by this installer.
+
+RESOLUTION AND RESTORATION
+
+In Options > Screen Resolution, select a size with the left/right controls.
+OK applies and saves it; Cancel preserves the current selection. Higher render
+resolutions can be slower. The default is 1080p.
+
+To set a profile while the game is closed:
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Manage-SealHD.ps1 -Action Resolution -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil" -Width 2560 -Height 1440
+
+To uninstall and restore the recorded files from before the first installation:
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Manage-SealHD.ps1 -Action Uninstall -GameDirectory "E:\SteamLibrary\steamapps\common\Seal of Evil"
+
+The backup stays in the game's SealHD-backup folder. Newly installed files that
+have since been independently modified are preserved and reported by uninstall.
+
+SUPPORTED GAME BUILD
+
+The installer requires these SHA256 values for the original game files:
+
+SOE.EXE
+452B135E827B11520564BD07A789542D19CB63CCAF0AE93FEA53248537D8C00B
+
+Gfx3d.dll
+1B93A54C2F3086C509B2B81AF0B863E6CB36EF96F9CE94DF9814FFAD202CD078
+
+Other builds have not been verified. Original game executables, game data tables
+and saved games are not included.
+
+ARTWORK AND SOURCE
+
+The remaster targets the original central composition and details, with sparse
+widescreen extensions and removal of the main menu's red demo label. The title
+retains the original three hanging ornaments. The five 3840x2160 files are 4K
+exports of ImageGen edits: four generated originals are 1672x941 and the title
+original is 1671x941, resampled with high-quality bicubic interpolation.
+See provenance/artwork-prompts.txt and provenance/artwork-manifest.json.
+
+source/build.cmd builds the x86 proxy with Visual Studio 2022 C++ Build Tools
+and the Windows SDK. Adjust its standard toolchain path if necessary. The source
+matches the tested tooltip-fix build; no diagnostic hooks or trace recorder are
+included. See validation.txt, AI_DISCLOSURE.txt and ThirdParty.txt.
+
+manifest.json records file sizes and hashes. SHA256SUMS.txt additionally covers
+the manifest. The ZIP's separate .sha256 file verifies the downloaded archive.

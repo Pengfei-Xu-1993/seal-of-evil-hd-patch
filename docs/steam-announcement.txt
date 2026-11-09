@@ -10,6 +10,6 @@ Changes compared with the original game:
 [*]Adds enhanced opening screens and main-menu artwork, exported at 4K, with a widescreen main-menu background.
 [/list]
 
-[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/latest]Download the full patch on GitHub[/url]
+[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.23]Download the full patch on GitHub[/url]
 
 Developed and implemented by OpenAI Codex. I only reviewed the work and did not write the code.

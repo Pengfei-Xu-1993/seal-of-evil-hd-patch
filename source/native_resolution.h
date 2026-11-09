@@ -20,6 +20,10 @@ struct Patch {
 };
 
 static const Patch patches[] = {
+    {Module::Game, 0x21A7B0, 1024, Dimension::Width, "tooltip scratch initial width"},
+    {Module::Game, 0x21A7B8, 768, Dimension::Height, "tooltip scratch initial height"},
+    {Module::Game, 0x248DD6, 1024, Dimension::Width, "tooltip scratch reset width"},
+    {Module::Game, 0x248DDE, 768, Dimension::Height, "tooltip scratch reset height"},
     {Module::Game, 0x0087B6, 1024, Dimension::Width, "state 6 client width"},
     {Module::Game, 0x0087C0, 768, Dimension::Height, "state 6 client height"},
     {Module::Game, 0x06EB3E, 1024, Dimension::Width, "world viewport width comparison"},
