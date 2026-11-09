@@ -7,3 +7,4 @@ save-editor/native/* -text
 save-editor/build.ps1 -text
 save-editor/editor.manifest -text
 installer/** -text
+addons/packages/*.zip binary

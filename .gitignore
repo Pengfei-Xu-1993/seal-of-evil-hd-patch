@@ -13,3 +13,6 @@
 .vs/
 Thumbs.db
 Desktop.ini
+
+# Optional downloadable add-on packages
+!addons/packages/*.zip

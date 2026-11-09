@@ -17,6 +17,12 @@ All HD-patch components are included in one graphical installer. No earlier patc
 
 Existing users can run the same installer to update. It re-enables the HD menu after the temporary `MainMenu=0` diagnostic setting. It leaves manually renamed movie files unchanged; after installation, a previously renamed `Movie/Start.dat.SealHD-disabled` can be renamed back to `Start.dat` if that name is absent.
 
+## Optional Chinese localization and skill mod
+
+[Download the optional add-on packages](addons/README.md) for Chinese text and an optional no-cooldown/360-degree skill mod. Install the HD patch first, then the Chinese pack. The skill mod is separate and includes the latest Liang Hu quake (胆战心惊) and actor-support-list fixes.
+
+Each ZIP includes installation, hash checks and restoration. They preserve the HD DLLs, artwork, display settings and personal saves. **The final actor-support and quake revision has been checked statically and at file level, but has not been re-tested in a running game.** See the add-on instructions and validation limits before using it.
+
 ## Included
 
 - Windows 11 startup and color-path compatibility treatment for the supported Steam build, without requiring Windows compatibility mode or a 640x480 compatibility setting.
