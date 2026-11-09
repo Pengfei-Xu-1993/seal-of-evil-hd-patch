@@ -16,6 +16,10 @@ Project records distinguish static file checks, isolated installer tests, and ac
 
 The save editor has separate save-format, GUI, backup, catalog, native-generation and round-trip checks. Isolated running-game checks demonstrated edited money and skill rank, a replaced hidden weapon, and added items with regenerated tooltips. The final extreme item preset passed GUI and save/reload tests and an isolated equipped-character check with the expected attack, five defenses and corrected resource maxima. An earlier resource value was rejected after a client display wrap was observed. Full combined combat behavior across all 29 effects has not been separately verified. See [save-editor validation](save-editor/validation.md).
 
+## Complete installer beta
+
+Codex implemented the graphical C# installer, app-local movie-graph probe, targeted compatibility-setting handling, and presentation-path fallback. The project owner only reviews and approves the work. The beta preserves the audited EXE unchanged and has separate [portability validation](docs/portability-beta-validation.md). Remote Intel hardware and the final elevated/UAC installation flow remain unverified; missing IV50 support results in explicitly disclosed video skipping, not complete original-movie decoding.
+
 ## Save-editor names and game data
 
 The editor reads definitions from the user's own installation. Its Chinese display names combine reviewed annotations with explicitly labeled reference translations; these are not claimed to reproduce an official Chinese localization. Original aliases, IDs and stored English names remain unchanged. The separate native item worker loads the verified installed engine; that engine and the original data tables are not distributed with the editor. No user saves or private reference-project files are included.

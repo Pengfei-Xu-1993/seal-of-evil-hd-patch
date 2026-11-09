@@ -1,0 +1,88 @@
+{
+  "Tag": "v0.25-beta.1",
+  "Prerelease": true,
+  "Asset": {
+    "Name": "SealHDSetup-Portable-Test.exe",
+    "Bytes": 48003584,
+    "Sha256": "0E6523E32828F63B1057F3A93A45EB4D62168A44C9BB612E8522F65CB7703032"
+  },
+  "SourceInputs": [
+    {
+      "Path": "installer/src/CompatibilityLayers.cs",
+      "Sha256": "578EDE341D91C752BE79D5ACF3D364257166D6436AAFD59E5F5E8E35D6C54734"
+    },
+    {
+      "Path": "installer/src/InstallerConfig.cs",
+      "Sha256": "DD8595BEF5E8A5431A408E2565009888753944E5CB0C558A112CDB402D633208"
+    },
+    {
+      "Path": "installer/src/InstallerCore.cs",
+      "Sha256": "F87215585D806B0D9C601BB864B41DF7377BDBA54FE2E4986E042BA3D5790430"
+    },
+    {
+      "Path": "installer/src/InstallerFiles.cs",
+      "Sha256": "D5904CD49261EC1F846B8DBA80E1D0534200C779B2A02DA7DD7738024D622A52"
+    },
+    {
+      "Path": "installer/src/InstallerForm.cs",
+      "Sha256": "624290784879EADECE4251A1C441371AE27A2B041905044174ECF72C3C7F6BDD"
+    },
+    {
+      "Path": "installer/src/ManifestEditor.cs",
+      "Sha256": "085201F3DA806790A143FA22D87D2A06ADCFC1D81893159BE084ACC4C45A2CE8"
+    },
+    {
+      "Path": "installer/src/Program.cs",
+      "Sha256": "EB13837FF1B12931B28E6F7BE67B88564F8850342826576E1EDB7100671DD55F"
+    },
+    {
+      "Path": "installer/src/UiFonts.cs",
+      "Sha256": "4FF040EA92EF91AC59DB19493E381C24E60731255C5513963A1B18665458A52D"
+    },
+    {
+      "Path": "installer/native/SealVideoProbe.cs",
+      "Sha256": "A8207DC31FE0055186BE4874CC20B8E359667155D3DD4E746202BDA752D1B5DC"
+    },
+    {
+      "Path": "installer/installer.manifest",
+      "Sha256": "7AD472227763446C18E0B0A3A3184D0EE02384099CA95AC2313D981287D06FB9"
+    },
+    {
+      "Path": "installer/assets/SealHD.ico",
+      "Sha256": "1BDEA7A95C827B44A82015CB3322D84D2B9E141005682B7EA757273492950AD6"
+    },
+    {
+      "Path": "source/build.cmd",
+      "Sha256": "531527C0B18185D87256086FBF5B9957FA428F1544F8CCA73D6F68A8A71A83C5"
+    },
+    {
+      "Path": "source/dinput8.cpp",
+      "Sha256": "2AB1ECB09997EE2136911DE013F4B7D5E7EA3170C8A2BBDA5FB3D863EF597667"
+    },
+    {
+      "Path": "source/dinput8.def",
+      "Sha256": "C81007375376A1139AD631FFA33BF5ACC0E5ECD75E4293077664765CEC85AFB0"
+    },
+    {
+      "Path": "source/hd_assets.h",
+      "Sha256": "606D8FDDF6839FD234EE75925C418630FD645377F832EE57FC06281CDDFD97AF"
+    },
+    {
+      "Path": "source/hd_intro.h",
+      "Sha256": "D5AD84ACAF7E3BEA61B0D17B645EC9FDAEE506DE943BD06FAB2C749C1919F1BC"
+    },
+    {
+      "Path": "source/movie_guard.h",
+      "Sha256": "463EA42DEC6BE121605444A2032A40DB8FAD7944EBD7A3D2A9005674532F09EE"
+    },
+    {
+      "Path": "source/native_resolution.h",
+      "Sha256": "B2268DBA7C0CE40FE9A5C2CA1FF164AB2A93973BEC86D1AC96B66B1BDFDFD8E0"
+    },
+    {
+      "Path": "source/SealHD.ini",
+      "Sha256": "85A2901B6675B1B1BA297EA42B0A42E9641CD42AC30AFB92DF85FB2025E2120C"
+    }
+  ],
+  "Notes": "The audited installer is published unchanged. Its internal native and payload identifiers retain 0.25-local names. Public build helpers use repository-relative paths."
+}

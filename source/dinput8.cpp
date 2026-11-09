@@ -7,6 +7,7 @@
 #include "native_resolution.h"
 #include "hd_intro.h"
 #include "hd_assets.h"
+#include "movie_guard.h"
 
 // The game imports only DirectInput8Create. This proxy preserves that API and
 // records the display initialization calls used by the original executable.
@@ -508,6 +509,9 @@ static HRESULT __cdecl TraceVideoPlay(LPCSTR filename, void *directDraw, void *s
         HRESULT result = TryHDIntro(filename, &handled);
         if (handled) return result;
     }
+    bool handled = false;
+    HRESULT guarded = seal_movie_guard::TryHandle(filename, Log, &handled);
+    if (handled) return guarded;
     return realVideoPlay(filename, directDraw, surface, rectangle, videoType);
 }
 
@@ -735,6 +739,16 @@ static HRESULT WINAPI TracePresent(void *object, const RECT *source, const RECT 
     if (count == 1 || count == 60 || count == 600)
         Log("IDirect3DDevice8::Present count=%ld -> %08lx", count, result);
     return result;
+}
+
+// GPU resources alone do not prove that this patch can composite a frame.
+// A compatibility shim may replace CreateDevice before our device hook runs.
+static bool HasLivePresentationPath()
+{
+    if (!gameDevice || !seal_hd::Readable(gameDevice, sizeof(void *))) return false;
+    void **table = *reinterpret_cast<void ***>(gameDevice);
+    return table && seal_hd::Readable(table, 16 * sizeof(void *)) &&
+        table[15] == reinterpret_cast<void *>(TracePresent);
 }
 
 static HRESULT WINAPI TraceCreateDevice(void *object, UINT adapter, DWORD deviceType,
@@ -1180,7 +1194,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
         strcat_s(path, "SealHD.log");
         logFile = CreateFileA(path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
             nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        Log("SealHD proxy 0.24 x86 started (owned confirmation focus fix)");
+        Log("SealHD proxy 0.25-local x86 started (portable startup and presentation fallback; not published)");
         strcpy_s(path, gameDirectory);
         strcat_s(path, "SealHD.ini");
         strcpy_s(patchConfigPath, path);
@@ -1231,6 +1245,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
         InstallHooks();
         InstallIntroCommand();
         InstallResolutionOptions();
+        seal_hd::SetPresentationPathProbe(HasLivePresentationPath);
         bool hdMenu = seal_hd::Install(GetModuleHandleW(nullptr), GetModuleHandleW(L"Gfx3d.dll"),
             GetModuleHandleW(L"d3d8.dll"), Log);
         Log("HD menu module install=%d", hdMenu);

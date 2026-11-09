@@ -1,4 +1,22 @@
-# Seal of Evil HD Patch
+# Seal of Evil HD Patch - Complete Installer Beta
+
+**[Download the complete EXE installer beta](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/download/v0.25-beta.1/SealHDSetup-Portable-Test.exe)** from the [test release](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.25-beta.1).
+
+Windows 11 compatibility improvements, 1080p / 1440p (2K) / 4K resolution options, borderless fullscreen, HD opening screens, and widescreen main-menu artwork are included in **one graphical installer**. No earlier patch package or separate update is required.
+
+Close the game, run the EXE, select the folder containing `SOE.EXE`, choose a resolution, and install. Backup and restore are included, with Chinese and English interfaces. End users do not need CMD or PowerShell. Administrator permission is requested for existing game-specific compatibility settings.
+
+This beta applies the missing modern Windows manifest to the verified local game executable, handles the selected game's legacy color-mitigation flag, and keeps original artwork if the HD presentation path is unavailable. **If IV50 decoding is unavailable, original opening and ending videos are skipped automatically; their files are preserved.** No decoder is installed or bundled, and manually renamed movies are left unchanged.
+
+Local actual-game startup/menu and restoration passed, with all 14 managed paths restored exactly. Backend tests passed 64 assertions and a real-backend GUI smoke passed 17. The **remote Intel i7-8550U computer** and **final elevated/UAC installation flow** remain unverified. See [beta validation](docs/portability-beta-validation.md).
+
+**Developed and implemented by OpenAI Codex. The project owner only reviews and approves the work and did not write the code.**
+
+The beta tag includes the matching native patch and installer source. See [build instructions](installer/README.md). The stable `main` branch and existing stable release remain unchanged.
+
+Installer SHA256: `0E6523E32828F63B1057F3A93A45EB4D62168A44C9BB612E8522F65CB7703032`.
+
+## Previous stable release documentation
 
 Play the Steam version of **Seal of Evil** on **Windows 11**, with **1080p, 1440p (2K), and 4K** resolution options, borderless fullscreen, enhanced opening screens, and a widescreen main-menu background.
 

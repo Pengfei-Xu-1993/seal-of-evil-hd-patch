@@ -34,6 +34,7 @@ using LogFn = void (__cdecl *)(const char *, ...);
 using CreateXBmpFn = int (__cdecl *)(void *, void *&);
 using GetProcFn = FARPROC (WINAPI *)(HMODULE, LPCSTR);
 using DeletePaperFn = void *(__thiscall *)(void *, unsigned int);
+using PresentationPathProbe = bool (*)();
 
 template <typename T> static void Release(T *&object)
 {
@@ -41,6 +42,17 @@ template <typename T> static void Release(T *&object)
 }
 
 static LogFn logger;
+static PresentationPathProbe presentationPathProbe;
+static LONG presentationFallbackLogs;
+
+// GPU initialization alone does not prove that the surrounding D3D8 Present
+// reaches our compositor. A platform shim can replace or bypass that outer
+// path. The host must verify its live presentation hook before any key pixels
+// are substituted into the original CPU-painted scene.
+static void SetPresentationPathProbe(PresentationPathProbe probe)
+{
+    presentationPathProbe = probe;
+}
 static HMODULE executable;
 static HMODULE graphics;
 static HMODULE compilerModule;
@@ -374,7 +386,10 @@ static unsigned __int64 __cdecl Dispatch(void *object, DWORD slot)
     // The game's complete scene is cached after its first Paint. Establish key
     // substitution before that Paint, rather than waiting for its first Present.
     SceneKind wanted = WantedScene();
-    if (wanted && (!compositorReady || compositorScene != wanted)) PrepareForPaint();
+    bool presentationReady = wanted && presentationPathProbe && presentationPathProbe();
+    if (wanted && !presentationReady && logger && InterlockedIncrement(&presentationFallbackLogs) <= 8)
+        logger("HD artwork original-image fallback: outer presentation path not verified scene=%ld", wanted);
+    if (wanted && presentationReady && (!compositorReady || compositorScene != wanted)) PrepareForPaint();
     AcquireSRWLockShared(&paperLock);
     Paper *paper = FindPaper(object);
     void *target = nullptr;
@@ -382,7 +397,7 @@ static unsigned __int64 __cdecl Dispatch(void *object, DWORD slot)
     if (paper) {
         target = paper->originalTable[slot / 4];
         bool sceneImage = paper->id == 2627 ? wanted == OpeningScene : wanted == MenuScene;
-        if (compositorReady && compositorScene == wanted && sceneImage && paper->keyed) {
+        if (presentationReady && compositorReady && compositorScene == wanted && sceneImage && paper->keyed) {
             destination = paper->keyed;
             target = (*reinterpret_cast<void ***>(destination))[slot / 4];
             InterlockedIncrement(&keyDrawGeneration);
