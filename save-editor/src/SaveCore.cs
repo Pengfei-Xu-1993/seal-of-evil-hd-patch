@@ -20,6 +20,7 @@ namespace SealSaveEditor
         internal bool Active = true;
         internal ItemModifier Modifier;
         internal int ModifierWord;
+        internal bool ControlledCampaignWrite;
         public string Key { get; internal set; }
         public string Name { get; internal set; }
         public string Group { get; internal set; }
@@ -188,7 +189,7 @@ namespace SealSaveEditor
         internal SaveNode Root;
     }
 
-    public sealed class SaveDocument
+    public sealed partial class SaveDocument
     {
         private static readonly Encoding GameEncoding = Encoding.GetEncoding(936, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback);
         private readonly List<SaveNode> nodes = new List<SaveNode>();
@@ -614,6 +615,34 @@ namespace SealSaveEditor
             return item.Node;
         }
 
+        internal SaveField GetPrimaryCampaignGameCountField()
+        {
+            if (userRoot == null || userRoot.Type != 0x1003 || userRoot.Source != "USE"
+                || Characters.Count == 0 || Characters[0].Node != userRoot)
+                throw new InvalidOperationException("This save has no verified primary-player campaign record.");
+            SaveField field = userRoot.Fields.SingleOrDefault(f => f.Key == "attr.121" && f.Modifier == null);
+            if (field == null || !field.Active || field.Node != userRoot || field.Kind != "Int32" || field.Name != "GameCount")
+                throw new InvalidOperationException("This save has no verified primary-player GameCount field.");
+            return field;
+        }
+
+        internal void SetPrimaryCampaignGameCount(SaveField expectedField, int value, bool authorizeWrite)
+        {
+            SaveField field = GetPrimaryCampaignGameCountField();
+            if (field != expectedField) throw new ArgumentException("The campaign field belongs to a different player or document.", "expectedField");
+            string text = value.ToString(CultureInfo.InvariantCulture);
+            if (!authorizeWrite && text != field.OriginalText)
+                throw new InvalidOperationException("A changed campaign field requires its document-local write authorization.");
+            field.RestoreWorkingText(text); field.ControlledCampaignWrite = authorizeWrite;
+        }
+
+        private bool IsControlledCampaignWrite(SaveNode node, SaveField field)
+        {
+            return field.ControlledCampaignWrite && node == userRoot && node.Type == 0x1003
+                && field.Node == node && field.Key == "attr.121" && field.Name == "GameCount"
+                && field.Kind == "Int32" && field.Modifier == null;
+        }
+
         /// <summary>Create one independent native item object in a selected party member's backpack.</summary>
         public ItemRecord AddItem(CharacterRecord owner, ItemInitialState initial)
         {
@@ -977,7 +1006,8 @@ namespace SealSaveEditor
                 foreach (var change in changes.OrderBy(p => p.Key.RelativeOffset))
                 {
                     SaveField field = change.Key;
-                    if (field.IsModified && !field.Editable) throw new InvalidOperationException("A read-only field was changed.");
+                    if (field.IsModified && !field.Editable && !IsControlledCampaignWrite(node, field) && !IsControlledSkillWrite(node, field))
+                        throw new InvalidOperationException("A read-only field was changed.");
                     int replaceStart = field.RelativeOffset, replaceLength = field.StorageLength;
                     byte[] value;
                     if (field.Kind == "Int32") value = BitConverter.GetBytes(Int32.Parse(change.Value, CultureInfo.InvariantCulture));

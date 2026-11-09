@@ -1,0 +1,8 @@
+Original raster icon generated with the built-in image_gen tool.
+Prompt: ICON-PROMPT.txt
+Source: seal-editor-icon-ai.png (1254 x 1254, RGBA, genuine alpha transparency).
+Windows icon: seal-editor-icon-ai.ico (16, 32, 48, 64, 128 and 256 px).
+Conversion script: Convert-EditorIcon.ps1, GDI+ resampling only.
+All ICO frames use standard 32-bit BGRA DIB data and an AND transparency mask.
+Validation: ICON-VALIDATION.json.
+This is new artwork. It does not contain an original game logo or an SVG substitute.

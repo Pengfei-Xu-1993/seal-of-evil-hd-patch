@@ -98,6 +98,30 @@ static HWND mouseLatchWindow;
 static WNDPROC mouseLatchPrevious;
 static volatile LONG mousePressEdges[2];
 static LONG recoveredMousePresses;
+static HHOOK modalFocusHook;
+static LONG modalMinimizeBlocked;
+
+// A native owned confirmation is still part of the game. Preserve the disabled
+// rendering window while that dialog becomes active; unrelated deactivation
+// and minimize requests must retain their normal behavior.
+static bool IsOwnedGameDialog(HWND owner, HWND candidate)
+{
+    if (!owner || !candidate || candidate == owner || !IsWindow(candidate)) return false;
+    DWORD candidateProcess = 0;
+    DWORD candidateThread = GetWindowThreadProcessId(candidate, &candidateProcess);
+    if (candidateProcess != GetCurrentProcessId() ||
+        candidateThread != GetWindowThreadProcessId(owner, nullptr)) return false;
+    char name[32] = {};
+    if (!GetClassNameA(candidate, name, sizeof(name)) || strcmp(name, "#32770")) return false;
+    HWND current = GetWindow(candidate, GW_OWNER);
+    for (unsigned depth = 0; current && depth < 16; ++depth) {
+        if (current == owner) return true;
+        HWND next = GetWindow(current, GW_OWNER);
+        if (next == current) break;
+        current = next;
+    }
+    return false;
+}
 
 static void ClearMousePresses()
 {
@@ -105,10 +129,78 @@ static void ClearMousePresses()
     InterlockedExchange(&mousePressEdges[1], 0);
 }
 
+struct OwnedDialogSearch { HWND owner, found; };
+static BOOL CALLBACK FindOwnedDialogWindow(HWND window, LPARAM parameter)
+{
+    auto search = reinterpret_cast<OwnedDialogSearch *>(parameter);
+    if (!IsOwnedGameDialog(search->owner, window)) return TRUE;
+    search->found = window;
+    return FALSE;
+}
+
+static HWND FindOwnedGameDialog(HWND owner)
+{
+    OwnedDialogSearch search = { owner, nullptr };
+    EnumThreadWindows(GetWindowThreadProcessId(owner, nullptr), FindOwnedDialogWindow,
+        reinterpret_cast<LPARAM>(&search));
+    return search.found;
+}
+
+static LRESULT CALLBACK ModalFocusCbtProc(int code, WPARAM wParam, LPARAM lParam)
+{
+    if (code == HCBT_MINMAX && reinterpret_cast<HWND>(wParam) == gameWindow && gameWindow) {
+        int command = static_cast<int>(lParam);
+        bool minimizing = command == SW_MINIMIZE || command == SW_SHOWMINIMIZED ||
+            command == SW_SHOWMINNOACTIVE || command == SW_FORCEMINIMIZE;
+        HWND foreground = GetForegroundWindow();
+        HWND dialog = minimizing ? FindOwnedGameDialog(gameWindow) : nullptr;
+#if defined(SEALHD_DIALOG_DIAGNOSTICS)
+        Log("Dialog CBT minmax command=%d game=%p enabled=%d iconic=%d foreground=%p ownedDialog=%p",
+            command, gameWindow, IsWindowEnabled(gameWindow), IsIconic(gameWindow), foreground, dialog);
+        static LONG minimizeTraceCount;
+        if (minimizing && InterlockedIncrement(&minimizeTraceCount) <= 12) {
+            void *frames[16] = {};
+            USHORT length = CaptureStackBackTrace(0, _countof(frames), frames, nullptr);
+            for (USHORT i = 0; i < length; ++i) Log("Dialog CBT caller frame=%u address=%p", i, frames[i]);
+        }
+#endif
+        if (borderless && virtualFullscreen && minimizing && !IsWindowEnabled(gameWindow) &&
+            foreground == gameWindow && dialog) {
+            ClearMousePresses();
+            LONG count = InterlockedIncrement(&modalMinimizeBlocked);
+            if (count <= 8) Log("Owned modal minimize prevented game=%p dialog=%p command=%d count=%ld",
+                gameWindow, dialog, command, count);
+            // WH_CBT permits a nonzero return to cancel only this minimize.
+            // The native modal owner stays disabled and its decision is untouched.
+            return 1;
+        }
+    }
+    return CallNextHookEx(modalFocusHook, code, wParam, lParam);
+}
+
+static void InstallModalFocusHook(HWND window)
+{
+    if (modalFocusHook || !borderless || !virtualFullscreen || window != gameWindow ||
+        GetWindowThreadProcessId(window, nullptr) != GetCurrentThreadId()) return;
+    modalFocusHook = SetWindowsHookExA(WH_CBT, ModalFocusCbtProc, nullptr, GetCurrentThreadId());
+    Log("Owned modal focus hook installed=%d thread=%lu error=%lu", modalFocusHook != nullptr,
+        GetCurrentThreadId(), modalFocusHook ? ERROR_SUCCESS : GetLastError());
+}
+
 static LRESULT CALLBACK MouseLatchWindowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
 {
     WNDPROC previous = mouseLatchPrevious;
     if (window == mouseLatchWindow) {
+#if defined(SEALHD_DIALOG_DIAGNOSTICS)
+        static LONG activationTraceCount;
+        if ((message == WM_ACTIVATE || message == WM_ACTIVATEAPP || message == WM_ENABLE ||
+            message == WM_KILLFOCUS || message == WM_CANCELMODE || message == WM_SYSCOMMAND ||
+            message == WM_SIZE && wParam == SIZE_MINIMIZED) && InterlockedIncrement(&activationTraceCount) <= 64)
+            Log("Dialog activation message=%04x wParam=%p lParam=%p enabled=%d iconic=%d foreground=%p nextOwnedDialog=%d",
+                message, reinterpret_cast<void *>(wParam), reinterpret_cast<void *>(lParam),
+                IsWindowEnabled(window), IsIconic(window), GetForegroundWindow(),
+                message == WM_ACTIVATE && IsOwnedGameDialog(window, reinterpret_cast<HWND>(lParam)));
+#endif
         if (message == WM_LBUTTONDOWN || message == WM_LBUTTONDBLCLK ||
             message == WM_RBUTTONDOWN || message == WM_RBUTTONDBLCLK) {
             if (GetForegroundWindow() == window && IsWindowEnabled(window)) {
@@ -134,6 +226,7 @@ static LRESULT CALLBACK MouseLatchWindowProc(HWND window, UINT message, WPARAM w
 
 static void RemoveMouseLatch()
 {
+    if (modalFocusHook) { UnhookWindowsHookEx(modalFocusHook); modalFocusHook = nullptr; }
     ClearMousePresses();
     HWND window = mouseLatchWindow;
     if (window && IsWindow(window) &&
@@ -148,6 +241,7 @@ static void RemoveMouseLatch()
 static bool InstallMouseLatch(HWND window)
 {
     if (!realGetAsyncKeyState || !window || window != gameWindow || !IsWindow(window)) return false;
+    InstallModalFocusHook(window);
     if (window == mouseLatchWindow) return true;
     // Device creation and subclass installation run on the game's window
     // thread. Do not change another thread's window procedure from a helper.
@@ -1086,7 +1180,7 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
         strcat_s(path, "SealHD.log");
         logFile = CreateFileA(path, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
             nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        Log("SealHD proxy 0.23 x86 started (tooltip canvas fix)");
+        Log("SealHD proxy 0.24 x86 started (owned confirmation focus fix)");
         strcpy_s(path, gameDirectory);
         strcat_s(path, "SealHD.ini");
         strcpy_s(patchConfigPath, path);

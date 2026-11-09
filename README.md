@@ -6,38 +6,48 @@ Play the Steam version of **Seal of Evil** on **Windows 11**, with **1080p, 1440
 
 ## Downloads
 
-| Download | What it does |
+| Download | What to choose |
 | --- | --- |
-| **[HD Patch v0.23](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.23)** | Full installation package: Windows 11 startup compatibility, high resolutions, enhanced artwork, and the tooltip fix. Download `SealHD_v0.23.zip`. |
-| **[Save Editor](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.0)** | Character, skill and item editing, native item generation, and strong equipment presets. Download `SealSaveEditor.zip`. |
+| **[Full HD patch](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.24)** | Download `SealHD_v0.24.zip` for the complete installation, including artwork and presentation components. |
+| **[Update an existing HD installation](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/download/v0.24/SealHD-DialogFix.zip)** | Small update that adds the fullscreen confirmation fix and retains your existing resolution, artwork and configuration. Requires the complete HD patch to be installed already. |
+| **[Save Editor](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.1)** | Download `SealSaveEditor.zip` for the editor, its two native helpers, source and English instructions. |
 
-Download the application ZIP attached to the relevant release. GitHub's automatic **Source code** archives are not the ready-to-run installation packages.
+Use the application ZIP attached to the relevant release. GitHub's automatic **Source code** archives are for building the tools and do not contain the complete installed HD payload.
 
 ## HD patch
 
 - Fixes the verified Steam build's Windows 11 startup failure without requiring Windows compatibility mode or the 640x480 compatibility setting.
 - Adds **1920x1080**, **2560x1440**, and **3840x2160** to the game's resolution options, with borderless fullscreen.
-- Adds enhanced opening screens and a widescreen main-menu background, supplied as **3840x2160** artwork files.
-- Fixes corrupted or striped skill-tooltip backgrounds and the associated multi-second freezes when hovering near the bottom of a high-resolution screen. The original translucent background is retained.
+- Adds enhanced opening screens and a widescreen campfire main-menu background, supplied as **3840x2160** artwork files.
+- Fixes corrupted skill-tooltip backgrounds and their reproduced multi-second hover freezes, retaining the original translucent background.
+- Keeps overwrite-save confirmations over the fullscreen game instead of minimizing the game to the desktop. Confirm, Cancel and normal Alt+Tab switching were tested.
 
-To install, exit the game, extract **all** of `SealHD_v0.23.zip`, and run `Install.cmd`. Start the game normally through Steam, then choose a resolution under **Options > Screen Resolution**. The default is 1080p. The release includes instructions for other Steam library locations and restoring the previous files.
+To install, exit the game, extract **all** of `SealHD_v0.24.zip`, and run `Install.cmd`. Start normally through Steam, then select a resolution under **Options > Screen Resolution**. The default is 1080p. Instructions cover other Steam library locations and restoring the previous files.
 
-The full package works for new installations. Existing HD patch users can alternatively use the smaller `SealHD-TooltipFix.zip` update from the same release to replace only the proxy DLL and keep their current configuration and artwork.
+Existing HD users can extract `SealHD-DialogFix.zip` and run its `Install.cmd` to retain their current settings. The update backs up the previous proxy and preserves the original-install backup history. It does not manage saved games.
 
-The artwork uses AI-assisted restoration and widescreen extension. Its generated source images were approximately 1672x941 and were resampled to 3840x2160; **4K describes the delivered file dimensions**, not native 4K generation. See [artwork provenance](provenance/) and the [AI disclosure](AI_DISCLOSURE.md).
+The artwork uses AI-assisted restoration and widescreen extension. Generated source images were approximately 1672x941 and were resampled to 3840x2160; **4K describes the delivered dimensions**, not native 4K generation. See [artwork provenance](provenance/) and [AI disclosure](AI_DISCLOSURE.md).
 
-Higher resolutions increase the old renderer's workload. The tooltip fix removes the reproduced multi-second fault; it does not make general 4K rendering faster. The tested machine still submitted approximately 10 frames per second at 4K. Start with 1080p and choose a resolution that performs well on your system.
+Higher resolutions increase the old renderer's workload. Earlier 4K tests submitted approximately 10 frames per second on the development machine. Start with 1080p and choose a resolution that performs well on your system. The confirmation fix preserves the small original dialog layout; the tested English message still clips its final words.
 
 ## Optional save editor
 
-The separate save editor supports character money, experience, level, health, mana, elemental attributes, verified skill values, inventory, equipment, and actual item bonus records. It can add or replace items from the installed game's **657 item templates**, preview their native generated defaults, and add or remove equipment bonuses. Coordinates can be edited within the current map; cross-map relocation is read only.
+The editor now displays **original skill and equipment icons**, prepares item previews automatically, and supports continuous item addition without closing its browser.
 
-Extract the editor package and open `SealSaveEditor.exe`, keeping `SealItemWorker.exe` beside it. Chinese and English interface options are available. Close the game before saving changes, then use **Save with backup** or **Export copy**. Item generation reads definitions and the verified native engine from your own game installation. The editor is optional and is not required by the HD patch.
+- Edit readable character properties, learned skills and equipment/material bonus records, with Undo/Redo and whole-slot backups.
+- Browse **657 ordinary item templates**, including hidden equipment, and add or replace objects using their original native generated state. Use quick level-99 addition or choose another generation level.
+- Generate **218 concrete native skill books**, including learning books, upgrade books, class manuals and special/crafting books. These retain the real skill bindings and use behavior.
+- Learn the selected character's class skills or maximize that class's skill tree using the original rank limits and associated forms.
+- Add original companions with their native starting equipment and skills. Early addition does not complete their later recruitment quests.
+- Enable second-playthrough eligibility while retaining current progress. This does not automatically satisfy the hidden ending's other conditions.
+- Edit game **Data TXT** through a table with Chinese field explanations or the original text view. Saving creates a backup; changing these files affects the installation, not only one save.
+
+Extract the complete editor ZIP and keep `SealItemWorker.exe` and `SealActorWorker.exe` beside `SealSaveEditor.exe`. Chinese is the default interface; English is available. Close the game before saving edits. The editor reads original definitions and icons from your own installation and is optional for the HD patch.
+
+Coordinates can be edited within the current map; cross-map relocation is read only. Skill activation still follows original class and element conditions. Later story scripts can recruit or replace an early-added companion. Validation covers the tested workflows, not a complete campaign after every combination of edits.
 
 ## Requirements and source
 
-You need your own supported Steam game installation. The public packages contain **no original game executables, original game data tables, or user saves**. Source code is included with the release packages; original artwork and third-party components remain credited to their respective owners. See [third-party attribution](THIRD_PARTY.md).
+You need your own supported Steam installation. The public editor contains **no original game binaries, data tables, resource icons or user saves**. The full HD package includes its documented presentation components and enhanced artwork. See [third-party attribution](THIRD_PARTY.md).
 
-Testing covered the verified Steam build on a Windows 11 development machine. Each release includes its validation scope and limitations; other builds and hardware are not guaranteed to behave identically.
-
-Manuals and source: [HD installation and build](docs/installation.txt), [HD validation](docs/validation.txt), [save editor manual and build](save-editor/README.md), [save editor validation](save-editor/validation.md).
+Source and manuals: [HD installation/build](docs/installation.txt), [HD validation](docs/validation.txt), [editor manual/build](save-editor/README.md), [editor validation](save-editor/validation.md).

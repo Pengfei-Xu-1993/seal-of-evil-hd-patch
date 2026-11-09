@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using SealSaveEditor;
 
 // Separate x86 process: the editor never loads the original engine into its own process.
 // No original game binary or catalog is included in this program.
@@ -20,10 +21,13 @@ internal static class NativeItemWorker
     [DllImport("kernel32.dll")] private static extern uint SetErrorMode(uint mode);
     [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)] private static extern void srand(uint seed);
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate void VoidCall();
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate IntPtr PathLookupCall(IntPtr path);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate IntPtr AllocatorCall();
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate void FactoryCall(IntPtr item, int minimumLevel, int maximumLevel, int type, IntPtr alias);
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)] private delegate IntPtr ConstructorCall(IntPtr item);
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)] private delegate void ThisVoidCall(IntPtr item);
     [UnmanagedFunctionPointer(CallingConvention.ThisCall)] private delegate void ThisStringCall(IntPtr item, IntPtr value);
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)] private delegate void ThisIntCall(IntPtr item, int value);
 
     private static T Function<T>(int rva)
     { return (T)(object)Marshal.GetDelegateForFunctionPointer(IntPtr.Add(engine, rva), typeof(T)); }
@@ -33,6 +37,7 @@ internal static class NativeItemWorker
         public string Alias;
         public int Level;
         public int Seed;
+        public ScriptBookDefinition Book;
     }
 
     private static int Main(string[] args)
@@ -72,6 +77,15 @@ internal static class NativeItemWorker
             if (!Directory.Exists(Path.Combine(scratch, "Data")) || !File.Exists(Path.Combine(scratch, "Dlg", "Name.dlg")))
                 throw new InvalidDataException("The copied original catalog is incomplete.");
             if (Directory.Exists(Path.Combine(scratch, "System"))) throw new InvalidDataException("Worker directories must not contain saves or a System directory.");
+            ScriptItemCatalog books = null;
+            foreach (Request request in requests)
+            {
+                if (request.Alias.IndexOf('/') < 0 && request.Alias.IndexOf('\\') < 0) continue;
+                if (!request.Alias.StartsWith("复活/技能书/", StringComparison.Ordinal)) throw new InvalidDataException("Only verified concrete skill-book script paths may be constructed.");
+                if (books == null) books = ScriptItemCatalog.Load(Path.GetDirectoryName(enginePath));
+                request.Book = books.Find(request.Alias);
+                if (request.Book == null || request.Level != 1) throw new InvalidDataException("Select a verified original skill book with its native level-1 defaults.");
+            }
             Directory.SetCurrentDirectory(scratch);
             engine = LoadLibrary(enginePath);
             if (engine == IntPtr.Zero) throw new InvalidOperationException("Could not load the installed original engine (" + Marshal.GetLastWin32Error() + ").");
@@ -80,6 +94,7 @@ internal static class NativeItemWorker
             Function<ThisVoidCall>(0x170600)(IntPtr.Add(engine, 0x4DCF98)); // Native allocation pools.
             Function<VoidCall>(0x3330)(); // Native field-name registration.
             Function<VoidCall>(0x6A3B0)(); // Original Data/*.txt and Dlg/Name.dlg readers.
+            if (books != null) Function<VoidCall>(0x82160)(); // Exact built-in subclass registrations; no world initialization.
             if (Marshal.ReadInt32(IntPtr.Add(engine, 0x46A640)) < 657 || Marshal.ReadInt32(IntPtr.Add(engine, 0x4D66C8)) < 243)
                 throw new InvalidDataException("The native catalog did not initialize completely.");
 
@@ -102,24 +117,45 @@ internal static class NativeItemWorker
 
     private static void Generate(Request request, BinaryWriter output)
     {
-        IntPtr item = Marshal.AllocHGlobal(0x470), alias = IntPtr.Zero;
+        IntPtr item = IntPtr.Zero, alias = IntPtr.Zero;
         bool initialized = false;
         try
         {
-            for (int i = 0; i < 0x470; i++) Marshal.WriteByte(item, i, 0);
-            Function<ConstructorCall>(0x4DA80)(item);
-            initialized = true;
-            Function<ThisVoidCall>(0x4DB10)(item);
             byte[] bytes = Gbk.GetBytes(request.Alias + "\0");
             alias = Marshal.AllocHGlobal(bytes.Length); Marshal.Copy(bytes, 0, alias, bytes.Length);
-            Function<ThisStringCall>(0x1C00)(item, alias);
             srand(unchecked((uint)request.Seed));
-            // An exact alias bypasses the random template selector. Level is an explicit min=max.
-            Function<FactoryCall>(0x6D490)(item, request.Level, request.Level, -1, alias);
+            if (request.Book == null)
+            {
+                item = Marshal.AllocHGlobal(0x470);
+                for (int i = 0; i < 0x470; i++) Marshal.WriteByte(item, i, 0);
+                Function<ConstructorCall>(0x4DA80)(item); initialized = true;
+                Function<ThisVoidCall>(0x4DB10)(item);
+                Function<ThisStringCall>(0x1C00)(item, alias);
+                // An exact alias bypasses the random template selector. Level is an explicit min=max.
+                Function<FactoryCall>(0x6D490)(item, request.Level, request.Level, -1, alias);
+            }
+            else
+            {
+                IntPtr registration = Function<PathLookupCall>(0x6980)(alias);
+                if (registration == IntPtr.Zero || Marshal.ReadIntPtr(registration, 0x0C) != IntPtr.Add(engine, request.Book.AllocatorRva))
+                    throw new InvalidDataException("The original book registration does not match its verified allocator.");
+                item = Function<AllocatorCall>(request.Book.AllocatorRva)();
+                if (item == IntPtr.Zero) throw new InvalidDataException("Native book allocation failed.");
+                initialized = true;
+                IntPtr vtable = Marshal.ReadIntPtr(item);
+                if (vtable != IntPtr.Add(engine, request.Book.VtableRva)
+                    || Marshal.ReadIntPtr(vtable, 0x0C) != IntPtr.Add(engine, request.Book.CreateRva)
+                    || Marshal.ReadIntPtr(vtable, 0x34) != IntPtr.Add(engine, request.Book.UseRva))
+                    throw new InvalidDataException("The generated book has an unverified subclass.");
+                Function<ThisVoidCall>(request.Book.CreateRva)(item);
+                Function<ThisIntCall>(0x50BD0)(item, 0); // Original book Init is empty; no world/handle registration.
+            }
             int[] values = new int[256]; Marshal.Copy(IntPtr.Add(item, 0x30), values, 0, values.Length);
             string actualAlias = ReadString(Marshal.ReadIntPtr(item, 0x2C));
             string name = ReadString(Marshal.ReadIntPtr(item, 0x28));
-            if (!String.Equals(actualAlias, request.Alias, StringComparison.Ordinal) || values[7] < 1 || String.IsNullOrWhiteSpace(name))
+            string expectedAlias = request.Book == null ? request.Alias : request.Book.Alias;
+            if (!String.Equals(actualAlias, expectedAlias, StringComparison.Ordinal) || values[7] < 1 || String.IsNullOrWhiteSpace(name)
+                || (request.Book != null && (values[7] != request.Book.TypeId || ReadString(Marshal.ReadIntPtr(item, 0x24)) != request.Book.Path || name != request.Book.Name)))
                 throw new InvalidDataException("The native factory could not generate " + request.Alias + ".");
             output.Write(actualAlias); output.Write(name); output.Write(ReadString(Marshal.ReadIntPtr(item, 0x24)));
             output.Write(request.Level); output.Write(request.Seed);
@@ -156,9 +192,13 @@ internal static class NativeItemWorker
         }
         finally
         {
-            if (initialized) Function<ThisVoidCall>(0x4DB00)(item);
+            if (initialized)
+            {
+                if (request.Book == null) Function<ThisVoidCall>(0x4DB00)(item);
+                else ((ThisIntCall)Marshal.GetDelegateForFunctionPointer(Marshal.ReadIntPtr(Marshal.ReadIntPtr(item)), typeof(ThisIntCall)))(item, 1);
+            }
             if (alias != IntPtr.Zero) Marshal.FreeHGlobal(alias);
-            Marshal.FreeHGlobal(item);
+            if (request.Book == null && item != IntPtr.Zero) Marshal.FreeHGlobal(item);
         }
     }
 

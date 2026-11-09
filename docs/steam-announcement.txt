@@ -1,17 +1,16 @@
-Seal of Evil HD patch: Windows 11 fixes, 1080p / 2K / 4K
-
 A compatibility and high-resolution patch for Seal of Evil.
 
 Changes compared with the original game:
 [list]
 [*]Fixes Windows 11 startup compatibility issues without requiring Windows compatibility mode.
 [*]Adds 1080p (1920x1080), 2K / 1440p (2560x1440) and 4K (3840x2160) options to the in-game settings, with borderless fullscreen.
-[*]Adds enhanced opening screens and main-menu artwork, exported at 4K, with a widescreen main-menu background.
-[*]Fixes corrupted skill-tooltip backgrounds and the associated multi-second freezes when hovering over lower-screen icons.
+[*]Adds enhanced opening screens and a widescreen campfire main-menu background, supplied as 4K artwork.
+[*]Fixes corrupted skill-tooltip backgrounds and the associated multi-second hover freezes.
+[*]Keeps overwrite-save confirmations over the fullscreen game instead of sending it to the desktop.
 [/list]
 
-[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/v0.23]Download the full HD patch on GitHub[/url]
+[url=https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/latest]Download the full HD patch on GitHub[/url]
 
-Your own game installation is required. The package does not include the original game executables or user saves.
+Exit the game, extract the complete patch ZIP and run Install.cmd. Your own game installation is required.
 
 Developed and implemented by OpenAI Codex. I only reviewed the work and did not write the code.

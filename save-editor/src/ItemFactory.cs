@@ -22,9 +22,21 @@ namespace SealSaveEditor
                 throw new ArgumentException("Select an original item template from this catalog.", "template");
             if (generationLevel < MinimumGenerationLevel || generationLevel > MaximumGenerationLevel)
                 throw new ArgumentOutOfRangeException("generationLevel", "The original item progression table covers levels 1..200.");
+            if (template.TypeId >= 45 && template.TypeId <= 49)
+                throw new InvalidOperationException("This is a class-book base shell. Select a bound learning book, upgrade book or class manual from the skill-book catalog.");
+            return CreateNative(catalog.GameDirectory, template.Alias, template.Alias, template.TypeId, null, generationLevel, seed);
+        }
+
+        internal static ItemInitialState CreateScript(string gameDirectory, ScriptBookDefinition definition, int seed)
+        {
+            return CreateNative(gameDirectory, definition.Path, definition.Alias, definition.TypeId, definition.Path, 1, seed);
+        }
+
+        private static ItemInitialState CreateNative(string gameDirectory, string requestIdentity, string expectedAlias, int expectedType, string expectedPath, int generationLevel, int seed)
+        {
             string worker = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SealItemWorker.exe");
             if (!File.Exists(worker)) throw new FileNotFoundException("The native item worker is missing. Reinstall the complete editor package.", worker);
-            string enginePath = Path.Combine(catalog.GameDirectory, "ERRelive.dll");
+            string enginePath = Path.Combine(gameDirectory, "ERRelive.dll");
             using (var algorithm = SHA256.Create()) using (var file = File.OpenRead(enginePath))
                 if (!String.Equals(BitConverter.ToString(algorithm.ComputeHash(file)).Replace("-", ""), EngineSha256, StringComparison.OrdinalIgnoreCase))
                     throw new InvalidDataException("This installed engine build has not been verified for native item generation.");
@@ -38,14 +50,14 @@ namespace SealSaveEditor
                 string data = Path.Combine(scratch, "Data"), dialog = Path.Combine(scratch, "Dlg");
                 Directory.CreateDirectory(data); Directory.CreateDirectory(dialog);
                 // Copies, not links: the worker can never write through to original data or saves.
-                foreach (string source in Directory.GetFiles(Path.Combine(catalog.GameDirectory, "Data"), "*.txt"))
+                foreach (string source in Directory.GetFiles(Path.Combine(gameDirectory, "Data"), "*.txt"))
                     File.Copy(source, Path.Combine(data, Path.GetFileName(source)), false);
-                File.Copy(Path.Combine(catalog.GameDirectory, "Dlg", "Name.dlg"), Path.Combine(dialog, "Name.dlg"), false);
+                File.Copy(Path.Combine(gameDirectory, "Dlg", "Name.dlg"), Path.Combine(dialog, "Name.dlg"), false);
                 string request = Path.Combine(scratch, "request.bin");
                 using (var writer = new BinaryWriter(File.Create(request), Encoding.UTF8))
                 {
                     writer.Write(0x51454953u); writer.Write(1); writer.Write(enginePath); writer.Write(1);
-                    writer.Write(template.Alias); writer.Write(generationLevel); writer.Write(seed);
+                    writer.Write(requestIdentity); writer.Write(generationLevel); writer.Write(seed);
                 }
                 var errors = new StringBuilder();
                 var start = new ProcessStartInfo(worker, "\"" + request + "\"") {
@@ -75,7 +87,7 @@ namespace SealSaveEditor
                 {
                     if (reader.ReadUInt32() != 0x52454953u || reader.ReadInt32() != 1 || reader.ReadInt32() != 1)
                         throw new InvalidDataException("Unrecognized native factory response.");
-                    state = ReadState(reader, template, generationLevel, seed);
+                    state = ReadState(reader, expectedAlias, expectedType, expectedPath, generationLevel, seed);
                     if (reader.BaseStream.Position != reader.BaseStream.Length) throw new InvalidDataException("Unexpected native factory response trailer.");
                 }
                 return state;
@@ -92,16 +104,17 @@ namespace SealSaveEditor
             }
         }
 
-        private static ItemInitialState ReadState(BinaryReader reader, ItemTemplate template, int level, int seed)
+        private static ItemInitialState ReadState(BinaryReader reader, string expectedAlias, int expectedType, string expectedPath, int level, int seed)
         {
             var state = new ItemInitialState { Alias = reader.ReadString(), Name = reader.ReadString(), Path = reader.ReadString(),
                 StringAttributes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), Modifiers = new List<int[]>() };
-            if (reader.ReadInt32() != level || reader.ReadInt32() != seed || state.Alias != template.Alias || String.IsNullOrWhiteSpace(state.Name))
+            if (reader.ReadInt32() != level || reader.ReadInt32() != seed || state.Alias != expectedAlias || String.IsNullOrWhiteSpace(state.Name)
+                || (expectedPath != null && state.Path != expectedPath))
                 throw new InvalidDataException("The native factory response does not match this preview.");
             if (reader.ReadInt32() != 256) throw new InvalidDataException("Invalid native attribute count.");
             state.IntegerAttributes = new int[256];
             for (int i = 0; i < 256; i++) state.IntegerAttributes[i] = reader.ReadInt32();
-            if (state.IntegerAttributes[7] != template.TypeId) throw new InvalidDataException("The native item type does not match the original template.");
+            if (state.IntegerAttributes[7] != expectedType) throw new InvalidDataException("The native item type does not match the original template.");
             int count = reader.ReadInt32();
             if (count < 0 || count > 4096) throw new InvalidDataException("Invalid native string count.");
             for (int i = 0; i < count; i++)
@@ -129,6 +142,8 @@ namespace SealSaveEditor
             state.GenerationSummary = "Generated by the installed original game engine. Level " + level.ToString(CultureInfo.InvariantCulture)
                 + ", seed " + seed.ToString(CultureInfo.InvariantCulture) + "; " + state.Modifiers.Count.ToString(CultureInfo.InvariantCulture)
                 + " native modifiers, including original activation conditions. This preview is the exact plan applied by Replace.";
+            if (expectedPath != null)
+                state.GenerationSummary = "Created through the installed game's original registered skill-book subclass. The exact object path, bound skill use callback and native level-1 defaults are preserved. Original class and learning requirements apply; the book does not bypass them.";
             return state;
         }
     }

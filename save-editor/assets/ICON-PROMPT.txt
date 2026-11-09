@@ -1,0 +1,9 @@
+Use case: logo-brand
+Asset type: final raster Windows desktop application icon, one centered icon on a genuinely transparent background, square composition.
+Primary request: A clear, restrained ancient Chinese bronze seal / five-element talisman emblem for an unofficial classic early-2000s fantasy game save editor, inspired by the mood of Seal of Evil but entirely original, without reproducing any game logo.
+Subject: one substantial compact square bronze seal face with softly chamfered corners, a broad raised rim, and one bold simple five-part geometric talisman formed from thick interlocking strokes around a dark teal jade center. A tiny warm red inset is the only accent.
+Style: polished hand-painted game application icon, dignified aged bronze and dark jade, clear large forms with restrained texture, readable silhouette, simple front-facing shallow relief. Broad planes, a few purposeful highlights, no microscopic ornament. Copper gold + deep teal jade + very small warm red.
+Composition: seal occupies about 82 percent of the square, centered, generous transparent padding. Even geometry, high contrast between rim and face. Must remain recognizable at 64px and 32px. The talisman should be an invented geometric motif, not writing.
+Constraints: true transparent alpha background; no text, no letters, no Chinese characters, no numerals, no existing game logo, no watermark, no separate props, no characters, no weapons, no extra particles, no scenery, no circular app badge, no busy engraved ground, no tiny pictorial scenes, no surrounding decorative clutter. One strong shape, clear texture, few elements.
+
+Generation method: built-in image_gen tool; transparent_background=true.

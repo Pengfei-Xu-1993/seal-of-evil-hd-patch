@@ -1,4 +1,4 @@
-Seal of Evil HD Patch v0.23
+Seal of Evil HD Patch v0.24
 
 A Windows 11 startup compatibility fix for the supported Steam edition, with
 1080p, 1440p (2K), 4K, borderless fullscreen and enhanced opening/main-menu art.
@@ -19,6 +19,8 @@ FEATURES
   creation and resolution resets now use the selected render size, retaining
   the original translucent background.
 
+- Keeps owned overwrite-save confirmations over the fullscreen game instead of minimizing to the desktop.
+
 INSTALL
 
 1. Exit Seal of Evil and extract this complete archive.
@@ -38,8 +40,8 @@ do not provide an installed payload.
 UPGRADING AN EXISTING HD INSTALLATION
 
 The full installer reapplies display settings and defaults to 1920x1080. To keep
-your existing HD resolution/configuration, use the separate SealHD-TooltipFix.zip
-update instead; it replaces only the proxy DLL. Existing users can also pass
+your existing HD resolution/configuration, use the separate SealHD-DialogFix.zip
+update instead; it replaces the proxy DLL and refreshes its uninstall record. Existing users can also pass
 -Width 2560 -Height 1440 (or -Width 3840 -Height 2160) to this full installer.
 Upgrades retain the original first-install backup. Saved games are not managed
 by this installer.

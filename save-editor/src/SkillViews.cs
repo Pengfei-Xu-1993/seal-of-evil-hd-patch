@@ -159,8 +159,8 @@ namespace SealSaveEditor
                 if (associated)
                 {
                     description.AppendLine(Choose(zh,
-                        "这是同一主技能的条件变体，不是另一个同名学习技能。加载器按 SkillIndex 别名绑定主技能；创建变体时复制主技能等级。后续等级同步尚未完整验证，因此此处的变体等级只读，不会擅自批量修改。",
-                        "This is a conditional variant of the main skill, not another independently learned spell with the same name. Loading binds it by the SkillIndex alias; creation copies the main rank. Later rank synchronization is not fully verified, so this view keeps the variant rank read only and does not silently rewrite it."));
+                        "这是同一主技能的条件变体。加载器按 SkillIndex 别名绑定主技能；一键学习和满级会按原引擎规则同步关联等级，此单字段视图保持只读。",
+                        "This is a conditional variant of the main skill. Loading binds it by the SkillIndex alias. The bulk Learn and Max actions synchronize associated ranks using the original engine's rules; this individual field remains read only."));
                     SetReadOnly(node, "attr.2", "attr.173");
                     Label(view, node, "attr.2", Choose(zh, "存储的变体等级（只读）", "Stored variant rank (read only)"), Choose(zh, "来自实际变体节点；不是组件等级。", "Read from this actual variant object; this is not a component rank."));
                     ExplainAssociation(node, catalog, description, zh);

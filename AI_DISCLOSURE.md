@@ -20,6 +20,10 @@ The save editor has separate save-format, GUI, backup, catalog, native-generatio
 
 The editor reads definitions from the user's own installation. Its Chinese display names combine reviewed annotations with explicitly labeled reference translations; these are not claimed to reproduce an official Chinese localization. Original aliases, IDs and stored English names remain unchanged. The separate native item worker loads the verified installed engine; that engine and the original data tables are not distributed with the editor. No user saves or private reference-project files are included.
 
+The expanded editor adds a separate native actor worker, bound skill-book generation, class skill-tree actions, companion insertion, controlled second-playthrough eligibility, game Data TXT editing and original-resource icon decoding. Tests distinguish all-book native construction from representative in-game book use and do not claim a full campaign after arbitrary edits. The fullscreen-confirmation patch was checked with actual Cancel/OK clicks and Alt+Tab, with read-only window monitoring.
+
+The editor's new application icon was generated as a separate bronze-and-jade design with a transparent background. Its source PNG is 1254x1254; the ICO contains standard application-icon sizes. The saved prompt and conversion source are in [save-editor/assets](save-editor/assets/). Original skill/equipment icons are read from each user's installation at runtime and are not distributed.
+
 ## ImageGen and 4K exports
 
 ImageGen used original game references and prompts to edit the main menu, opening title, and three static brand cards. The main-menu restoration target retained the original central objects and textures while limiting added objects in the widescreen side areas. The title restoration target retained the three hanging ornaments and central composition.

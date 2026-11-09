@@ -1,88 +1,65 @@
+<img src="assets/seal-editor-icon-ai.png" alt="Seal of Evil Save Editor icon" width="96" align="right">
+
 # Seal of Evil Save Editor
 
-A save editor for the verified Steam version of **Seal of Evil**, with readable character and skill properties, equipment bonuses, a complete item catalog, and original-game item generation.
+Readable character and skill editing, original skill/equipment icons, native item and skill-book generation, companion addition, second-playthrough eligibility, and integrated game-data editing.
 
-Developed and implemented by **OpenAI Codex**. The publisher reviewed the work and did not write the code.
+Developed and implemented by **OpenAI Codex**. The publisher only reviewed the work and did not write the code.
 
-## Download
+## Download and run
 
-Download **[SealSaveEditor.zip from the Save Editor release](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.0)** and extract the complete archive. Run `SealSaveEditor.exe`; keep `SealItemWorker.exe` in the same folder.
+Download **[SealSaveEditor.zip](https://github.com/Pengfei-Xu-1993/seal-of-evil-hd-patch/releases/tag/save-editor-v1.1)** and extract the entire archive. Run `SealSaveEditor.exe`, keeping **both** `SealItemWorker.exe` and `SealActorWorker.exe` beside it. No installer or Python installation is required; the application uses Windows .NET Framework.
 
-No installer or Python installation is required. The application uses the .NET Framework included with Windows 11. GitHub's automatically generated source archives are for building the program; use the attached ZIP to run it directly.
+Chinese is the default interface. Choose **English** in the header to switch. Definitions and original icons are read from your installed game; none of its original data or resource icons are bundled.
 
-## What you can do
+## Characters, skills and party
 
-- Edit character level, experience, health, energy, money, five-element attributes and verified combat properties.
-- Edit learned skills and their individual components with readable explanations. Shared display names do not merge distinct skill records.
-- Change equipment and crafting-material bonuses, including adding or removing actual bonus records.
-- Apply **Extreme equipment bonuses** for a much stronger item preset, or retain the separate original-table preset.
-- Browse all **657 ordinary item templates**, including hidden equipment, fixed and random bonuses, requirements, sockets and original generation information.
-- **Add new items** to a chosen party member without consuming an existing object.
-- **Replace an item** with another original template, such as changing a staff into iron ore or creating Lan Wei's hidden weapon, Demonic Flame. Generate and review the preview before applying it.
-- Use Chinese or English editor views. Item searches accept Chinese display names, installed English names and native aliases.
-- View the current map and edit coordinates within that map.
-- Undo or redo applied edits, export a separate edited copy, and save with an automatic whole-slot backup.
+- Edit verified money, experience, level, health, mana, five-element attributes and combat properties through named fields. Unknown structures remain advanced or read only.
+- Inspect main skills, associated casting forms and conditional enhancement components separately. A component's `-1` rank is not an unlearned main skill.
+- **Learn class skills** adds the selected character's missing class skills and their original branches. **Max class skills** also learns missing skills and raises ranks to their native limits. Class and element conditions still govern activation.
+- Add original companions with native starting equipment, skills and level-1 values, within the five-person party limit. Later story recruitment is not completed by this action and can recruit or replace them again.
+- Enable second-playthrough eligibility while keeping the current story and map progress. It changes the run-count condition; quests, the story ring and other hidden-ending conditions are not forced.
 
-Item previews use the verified original engine from your own installation. Generation inputs range from 1 to 200; some item types retain their original native level limits. Another 16 illustration/description entries are read-only references rather than inventory templates.
+## Inventory, equipment and books
 
-## Start editing
+- Browse all **657 ordinary item templates**, including hidden equipment, with original generated defaults, requirements and fixed/random effects. Another 16 illustration entries are read-only references.
+- Add to a selected party member or replace an existing item with its complete native state. Selecting an item prepares a preview automatically. Choose a level and Add, or double-click/use **Quick add level 99**. The browser stays open for more additions.
+- Add, remove or edit equipment and crafting-material bonus records. Original-table and stronger extreme presets remain separate choices. Existing above-preset and special records are preserved.
+- The separate browser offers **218 concrete native skill books**: learning, upgrade, second/third-stage, class manuals and special/crafting books. Books keep their native level-1 defaults and exact subclass paths; the five generic class-book shells do not provide those bindings.
+- Manuals attempt to learn their listed missing roots at rank 1 and add their specified branches. They do not maximize existing skills. Original book use and upgrade requirements remain in force.
 
-The editor opens in Chinese by default. Choose **English** in the header language selector to switch the interface.
+Generation inputs for ordinary items cover 1..200; some types enforce their own native level. Catalog presence does not guarantee an item normally drops in the game. Chinese item names distinguish reviewed installed annotations from editor reference translations.
 
-1. Close the game.
-2. Select a detected save slot, or open its `System/game/player_XX.gam`. Keep the matching `System/user/player_XX.use` and companion slot files together.
-3. Select a character, skill or inventory item, choose a property, and use the editor on the right. **Apply value** changes the working copy.
-4. Choose **Save with backup** to write the slot, or **Export copy** to keep an edited copy elsewhere.
-5. Start the game and load the edited slot. **Restore backup** restores a complete recorded slot snapshot.
+| Equipment shortcut | Effect |
+| --- | --- |
+| `Ctrl+Alt+A` | Strong extreme preset for supported persistent bonuses. |
+| `Ctrl+Alt+T` | Original-table maxima for those bonuses. |
+| `Ctrl+Alt+1` | Current/base level and element requirements set to 1. |
 
-Backups are stored beside the GAM files in `SealSaveEditor-backups`. Saving checks for source files changed since opening, validates the edited pair and rolls back its file replacements if a write fails. Undo and Redo apply to unsaved working changes.
+The extreme preset is a researched strong profile, not a universal mathematical maximum. See [preset values and limits](extreme-values.md), including the signed 16-bit character-panel resource budget.
 
-## Item shortcuts
+## Game Data TXT
 
-In **Items & equipment**, select the item and open **Shortcuts**.
+Open **Game data TXT...** to edit installed `Data/*.txt` files through tables with Chinese column explanations or the original text view. The editor preserves the original encoding, marker, comments and line endings when supported and creates backups before saving. Backup restoration creates its own recovery backup.
 
-| Command | Shortcut | Effect |
-| --- | --- | --- |
-| Extreme equipment bonuses | `Ctrl+Alt+A` | Adds or raises 29 persistent bonus types to the researched extreme preset. |
-| Add all equipment bonuses at table maxima | `Ctrl+Alt+T` | Uses the declared original-table maxima for the same supported types. |
-| Set level and element requirements to 1 | `Ctrl+Alt+1` | Sets both current and base level/elemental-attribute requirements to 1. |
+These files affect the installation and all relevant saves. Close the game before saving them. Unsupported structures are shown in the text view rather than guessed into a table.
 
-The extreme preset is substantially stronger than the table preset: maximum-health bonus **4,096 vs 600**, attack bonus **4,096 vs 120**, and each of the five defense bonuses **32,768 vs 120**. These are per-item bonuses, not the character's final totals.
+## Save safely
 
-Choose **View preset values...** in the same menu to open a read-only comparison of the extreme values, original-table values, units and evidence classifications. See the [complete values and arithmetic limits](extreme-values.md).
+1. Close the game and open the desired `System/game/player_XX.gam`, with its matching `System/user/player_XX.use` and companion files present.
+2. Apply edits to the working draft. Individual changes and bulk actions support Undo/Redo.
+3. Use **Save with backup** or **Export copy**, then restart the game and load the edited slot.
 
-Each changed command is one complete Undo/Redo action. Repeating it adds no duplicate preset records or history. Existing higher values and special, elemental, growing, disabled or conditional records are preserved. Dispel, revival, restore-health and restore-energy consumable actions are excluded from permanent bonuses.
+Whole-slot backups live beside the GAM files in `SealSaveEditor-backups`. Saving checks the opened files for concurrent changes and stages the GAM/USE pair. Cross-map relocation is read only; same-map coordinates remain editable.
 
-These commands change the working copy; **Save with backup** writes the slot. They are available in the item tab, and shortcut handlers reject hidden or modal-disabled editor windows.
+## Build and validation
 
-"Extreme" is a strong preset, not a claim that every value is the game's absolute maximum. Its six effective limits and 23 operational choices distinguish actual clamps or useful saturation from finite operating values. Resource, regeneration and combat arithmetic was budgeted for seven reinforced equipment slots; existing larger/duplicate bonuses or other modified inputs can exceed that scope. Movement and attack speeds can become very fast.
-
-The character-info panel reads health and energy through signed 16-bit snapshots. The resource budget is seven +4,096 bonuses plus at most 4,095 other maximum-resource points, totaling 32,767. Larger existing totals can wrap in that panel; the preset preserves existing above-profile values. See the [resource boundary and full scope](extreme-values.md).
-
-## Chinese item names
-
-All 657 templates have Chinese editor display names. Of these, 208 use reviewed Chinese annotations read from the installed tables; 449 use explicitly labeled editor reference translations, including the 20 hidden set pieces. Reference translations are not claimed to reproduce the original Chinese release.
-
-This affects editor presentation. Native item names, aliases, IDs and generated save payloads retain their original identity. It does not translate the game's interface.
-
-## Supported build and limits
-
-The editor was tested on Windows 11 with the Steam version-30 EASYRPG/USER save format. Native item generation checks the installed `ERRelive.dll` build and rejects unsupported binaries. No original game files, data tables or saves are included.
-
-- Cross-map relocation and unknown or structured script/model fields remain read-only.
-- The game can recalculate character, skill and conditional values. Editing a displayed description alone does not change the underlying effect.
-- The original-table and extreme presets are separate choices. Original generation limits are not engine-wide hard limits, and the extreme preset's operational values are not universal maxima.
-- [Validation](validation.md) distinguishes completed native/arithmetic checks, earlier editor checks and the current extreme-preset verification status.
-- The HD patch and its tooltip-canvas update are separate downloads.
-
-See [validation and evidence limits](validation.md) and [development attribution](ATTRIBUTION.md).
-
-## Build from source
-
-Open PowerShell in the source folder containing `build.ps1`, then run:
+From this directory, run:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 ```
 
-The script uses the Windows .NET Framework C# compiler and builds both executables without downloading dependencies. Keep the resulting editor and x86 item worker together.
+This builds the editor and its two x86 native helpers with the Windows .NET Framework compiler. The included application icon is required by the build. The default output is `build/`.
+
+The downloadable package also includes the source under `source/`; run its `build.ps1` from that folder to rebuild it. See [validation](validation.md), the [full package manual](studio-docs/README.txt), and [attribution](ATTRIBUTION.md). Tests distinguish native construction, actual GUI actions, and representative running-game use; they do not claim every book or a full edited campaign was played through.

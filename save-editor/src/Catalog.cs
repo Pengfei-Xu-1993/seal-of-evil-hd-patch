@@ -75,6 +75,7 @@ namespace SealSaveEditor
         public int BriefInfoId { get; set; }
         public int InfoId { get; set; }
         public int ActionId { get; set; }
+        public int IconId { get; set; }
         public int TypeId { get; set; }
         public int MaxLevel { get; set; }
         public int RequiredLevel { get; set; }
@@ -483,7 +484,7 @@ namespace SealSaveEditor
                 if (row.Length < 9 || Field(row, 0).Length == 0 || !Int32.TryParse(row[2], out nameId)) continue;
                 Skills.Add(new SkillDefinition {
                     Alias = Field(row, 0), OriginalName = Field(row, 1), NameId = nameId,
-                    BriefInfoId = Int(row, 3), InfoId = Int(row, 4), ActionId = Int(row, 6),
+                    BriefInfoId = Int(row, 3), InfoId = Int(row, 4), IconId = Int(row, 5), ActionId = Int(row, 6),
                     Name = ResolveName(nameId, Field(row, 1).Length == 0 ? Field(row, 0) : Field(row, 1)),
                     TypeId = Int(row, 7), MaxLevel = Int(row, 8), RequiredLevel = Int(row, 9),
                     LevelIncrement = Int(row, 10), SkillPointCost = Int(row, 11), Element = Int(row, 13),

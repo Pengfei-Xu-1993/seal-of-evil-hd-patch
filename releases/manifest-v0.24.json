@@ -1,0 +1,159 @@
+{
+  "FormatVersion": 1,
+  "Product": "Seal of Evil HD Patch",
+  "Version": "0.24",
+  "CreatedUtc": "2026-11-09T05:58:33.7066823Z",
+  "Build": {
+    "Path": "payload/dinput8.dll",
+    "Bytes": 188416,
+    "SHA256": "54A78C9003CF8B373EFCA9A5C6187E360060B3DBD9AD22E5D5D1B29F90DEAB74"
+  },
+  "DefaultDisplay": {
+    "Width": 1920,
+    "Height": 1080,
+    "ProfileIndex": 2,
+    "Borderless": 1
+  },
+  "SupportedGameHashes": {
+    "SOE_EXE": "452B135E827B11520564BD07A789542D19CB63CCAF0AE93FEA53248537D8C00B",
+    "Gfx3d_DLL": "1B93A54C2F3086C509B2B81AF0B863E6CB36EF96F9CE94DF9814FFAD202CD078"
+  },
+  "FileCount": 26,
+  "TotalFileCount": 28,
+  "ExcludedFromFileList": [
+    "manifest.json",
+    "SHA256SUMS.txt"
+  ],
+  "Files": [
+    {
+      "Path": "AI_DISCLOSURE.txt",
+      "Bytes": 1107,
+      "SHA256": "B9FD045BAABEDF97261CF3D741743CBB38903AE3D750230A41958FBB9B8C3A1F"
+    },
+    {
+      "Path": "Install.cmd",
+      "Bytes": 131,
+      "SHA256": "8C9D0E5BE72D37A06F96ACC9C29F7D530C6B95CE4AF1D42F71853D1CCEFC4A9D"
+    },
+    {
+      "Path": "Manage-SealHD.ps1",
+      "Bytes": 15472,
+      "SHA256": "183F3D6E8C53B8B0840B2F2A23F0F262540293F8EE3DA9819CE1EDF43AACC16B"
+    },
+    {
+      "Path": "payload/D3D8.dll",
+      "Bytes": 414208,
+      "SHA256": "25A0CEEB85FCC4675C6F964442EECC14FEDD504EFFD39C931A627249AD4685E2"
+    },
+    {
+      "Path": "payload/D3DImm.dll",
+      "Bytes": 208384,
+      "SHA256": "85AA1D15D6880DBE927458F6A045A631264BA128528010B7296EC5C3A640E0AC"
+    },
+    {
+      "Path": "payload/DDraw.dll",
+      "Bytes": 256000,
+      "SHA256": "F68CD82BFB585C9B6676C6282B0FAC713C9567EAE624BC991C5BCFE5881C7BEF"
+    },
+    {
+      "Path": "payload/dgVoodoo.conf",
+      "Bytes": 22024,
+      "SHA256": "C529F0EAD70418234D1C17D8B5A3E66268EB054514A38C4BF0AE288D8768C63F"
+    },
+    {
+      "Path": "payload/dinput8.dll",
+      "Bytes": 188416,
+      "SHA256": "54A78C9003CF8B373EFCA9A5C6187E360060B3DBD9AD22E5D5D1B29F90DEAB74"
+    },
+    {
+      "Path": "payload/SealHD-assets/intro-object.png",
+      "Bytes": 3631593,
+      "SHA256": "E2D08C664274CFD9E972D18DBD2F63658224759BAD0CBBC850A276923A8FD332"
+    },
+    {
+      "Path": "payload/SealHD-assets/intro-strategy.png",
+      "Bytes": 13806935,
+      "SHA256": "59BD3D4E96C58EDEBAC68305469A430762A51FECA79A7F2E8C565F8175BF137B"
+    },
+    {
+      "Path": "payload/SealHD-assets/intro-zoom.png",
+      "Bytes": 1421637,
+      "SHA256": "B1598562847EF64ABDFA5BD15427F4E6A95F229A87F77AEBE52B3B35FB74DAA6"
+    },
+    {
+      "Path": "payload/SealHD-assets/mainmenu.png",
+      "Bytes": 15778946,
+      "SHA256": "6202F4A7BC7FD0A53D5A16E93BA08DB73BFF154E5C9FF3E10C52B1C2CB436F24"
+    },
+    {
+      "Path": "payload/SealHD-assets/opening-title.png",
+      "Bytes": 12153968,
+      "SHA256": "786CB2CF671F3DF22DBB0D2CAE5D841367110A18C8DC8B12433B8F1FAE3EA563"
+    },
+    {
+      "Path": "payload/SealHD.ini",
+      "Bytes": 114,
+      "SHA256": "85A2901B6675B1B1BA297EA42B0A42E9641CD42AC30AFB92DF85FB2025E2120C"
+    },
+    {
+      "Path": "provenance/artwork-manifest.json",
+      "Bytes": 1207,
+      "SHA256": "2F855577E770DEA62146BC2E19F6C7A2693DCD09817F33A81394026853F2B655"
+    },
+    {
+      "Path": "provenance/artwork-prompts.txt",
+      "Bytes": 6698,
+      "SHA256": "57C319F8A22E07A17BCF4EBA9F7AD7E2BA234DB53C1E9517C0B9CFE05CF78411"
+    },
+    {
+      "Path": "README.txt",
+      "Bytes": 4493,
+      "SHA256": "AD92A21BA74AEB775222B7F861A44E1FF471753843AE4134DAB9D44B1172CDDC"
+    },
+    {
+      "Path": "source/build.cmd",
+      "Bytes": 321,
+      "SHA256": "531527C0B18185D87256086FBF5B9957FA428F1544F8CCA73D6F68A8A71A83C5"
+    },
+    {
+      "Path": "source/dinput8.cpp",
+      "Bytes": 57653,
+      "SHA256": "17F9936009307F1191E2830FC5E2BB7A92ACAAE0BD913A76157CEED06F41647F"
+    },
+    {
+      "Path": "source/dinput8.def",
+      "Bytes": 70,
+      "SHA256": "C81007375376A1139AD631FFA33BF5ACC0E5ECD75E4293077664765CEC85AFB0"
+    },
+    {
+      "Path": "source/hd_assets.h",
+      "Bytes": 65798,
+      "SHA256": "ABA42CC1C34DAE11CCAC9727375A8BC2B7E0A10BEB7665F5AEA582188ECE1816"
+    },
+    {
+      "Path": "source/hd_intro.h",
+      "Bytes": 13230,
+      "SHA256": "D5AD84ACAF7E3BEA61B0D17B645EC9FDAEE506DE943BD06FAB2C749C1919F1BC"
+    },
+    {
+      "Path": "source/native_resolution.h",
+      "Bytes": 10505,
+      "SHA256": "B2268DBA7C0CE40FE9A5C2CA1FF164AB2A93973BEC86D1AC96B66B1BDFDFD8E0"
+    },
+    {
+      "Path": "source/SealHD.ini",
+      "Bytes": 114,
+      "SHA256": "85A2901B6675B1B1BA297EA42B0A42E9641CD42AC30AFB92DF85FB2025E2120C"
+    },
+    {
+      "Path": "ThirdParty.txt",
+      "Bytes": 500,
+      "SHA256": "0FFF181ECCC37F9E8E5412A7BF452BCE7B8088B728A04F1949BFA3789649904D"
+    },
+    {
+      "Path": "validation.txt",
+      "Bytes": 7671,
+      "SHA256": "914BB9ECA7A8905AAD60D73FAD23D89E643899519CD168691705B5BE4F572638"
+    }
+  ]
+}

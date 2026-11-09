@@ -8,18 +8,21 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
 namespace SealSaveEditor
 {
-    public sealed class MainForm : Form
+    public sealed partial class MainForm : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SendMessage(IntPtr window, int message, IntPtr wParam, string lParam);
         [DllImport("user32.dll")] private static extern bool IsWindowEnabled(IntPtr window);
         private SaveDocument document;
         private GameCatalog catalog;
         private ItemTemplateCatalog itemTemplates;
+        private ScriptItemCatalog scriptBooks;
+        private GameIconImages gameImages;
         private string gameDirectory;
         private string loadedGamHash;
         private string loadedUserHash;
@@ -50,6 +53,13 @@ namespace SealSaveEditor
         private readonly TextBox recordDetail = new TextBox();
         private readonly Button saveButton = new Button();
         private readonly Button exportButton = new Button();
+        private readonly Button campaignButton = new Button();
+        private readonly Button dataButton = new Button();
+        private readonly Button partyButton = new Button();
+        private readonly Button learnSkillsButton = new Button();
+        private readonly Button maxSkillsButton = new Button();
+        private readonly Button skillBooksButton = new Button();
+        private bool actorBusy;
         private readonly Button itemCatalogButton = new Button();
         private readonly Button addModifierButton = new Button();
         private readonly Button removeModifierButton = new Button();
@@ -76,6 +86,7 @@ namespace SealSaveEditor
         {
             initialPath = path;
             Text = "Seal of Evil Save Editor";
+            EditorBranding.Apply(this);
             Font = UiFonts.Create();
             BackColor = Color.FromArgb(236, 232, 223);
             ForeColor = Color.FromArgb(34, 44, 54);
@@ -96,6 +107,7 @@ namespace SealSaveEditor
                 UpdateState();
             };
             FormClosing += delegate(object sender, FormClosingEventArgs e) { if (!ConfirmDiscard()) e.Cancel = true; };
+            Disposed += delegate { if (gameImages != null) gameImages.Dispose(); };
         }
 
         private static DataGridView NewFieldGrid()
@@ -138,11 +150,33 @@ namespace SealSaveEditor
             return button;
         }
 
+        private static void FitToolRow(FlowLayoutPanel panel, TableLayoutPanel table, int row, int minimum)
+        {
+            bool pending = false;
+            Action queue = delegate
+            {
+                if (pending || panel.IsDisposed || !panel.IsHandleCreated) return;
+                pending = true;
+                panel.BeginInvoke((Action)delegate
+                {
+                    pending = false;
+                    if (panel.IsDisposed || !panel.IsHandleCreated || table.IsDisposed) return;
+                    int bottom = panel.Controls.Cast<Control>().Select(c => c.Bottom + c.Margin.Bottom).DefaultIfEmpty(0).Max();
+                    int preferred = panel.GetPreferredSize(new Size(Math.Max(1, panel.ClientSize.Width), 0)).Height;
+                    int height = Math.Max(minimum, Math.Max(bottom, preferred) + panel.Padding.Bottom + 4);
+                    if (Math.Abs(table.RowStyles[row].Height - height) > 0.5F) table.RowStyles[row].Height = height;
+                });
+            };
+            panel.Layout += delegate { queue(); };
+            panel.HandleCreated += delegate { queue(); };
+        }
+
         private void BuildLayout()
         {
             TableLayoutPanel root = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 5, ColumnCount = 1, Padding = new Padding(18) };
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 90));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 108));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
@@ -180,7 +214,7 @@ namespace SealSaveEditor
             header.Controls.Add(fieldTools, 1, 1);
             root.Controls.Add(header, 0, 0);
 
-            FlowLayoutPanel toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
+            FlowLayoutPanel toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true };
             toolbar.Controls.Add(ButtonFor("Open save...", delegate { BrowseSave(); }));
             saveButton.Text = "Save with backup";
             saveButton.AutoSize = true;
@@ -200,6 +234,16 @@ namespace SealSaveEditor
             toolbar.Controls.Add(ButtonFor("Restore backup...", delegate { RestoreBackup(); }));
             toolbar.Controls.Add(ButtonFor("Readable data...", delegate { ExportReport(); }));
             toolbar.Controls.Add(ButtonFor("Game folder...", delegate { ChooseGameFolder(); }));
+            campaignButton.Text = "Playthrough..."; campaignButton.AutoSize = true;
+            campaignButton.Height = 36; campaignButton.Padding = new Padding(9, 3, 9, 3);
+            campaignButton.Margin = new Padding(0, 0, 8, 0); campaignButton.FlatStyle = FlatStyle.Flat;
+            campaignButton.BackColor = Color.White; campaignButton.Click += delegate { ShowCampaign(); };
+            toolbar.Controls.Add(campaignButton);
+            dataButton.Name = "OpenGameData"; dataButton.Text = "Game data TXT..."; dataButton.AutoSize = true;
+            dataButton.Height = 36; dataButton.Padding = new Padding(9, 3, 9, 3); dataButton.Margin = new Padding(0, 0, 8, 5);
+            dataButton.Click += delegate { ShowGameData(); };
+            toolbar.Controls.Add(dataButton);
+            FitToolRow(toolbar, root, 1, 50);
             root.Controls.Add(toolbar, 0, 1);
 
             SplitContainer body = new SplitContainer { Size = new Size(1200, 650), Dock = DockStyle.Fill, FixedPanel = FixedPanel.Panel1, SplitterDistance = 190, Panel1MinSize = 160, Panel2MinSize = 700, BackColor = Color.FromArgb(236, 232, 223) };
@@ -278,12 +322,19 @@ namespace SealSaveEditor
         {
             TabPage page = NewTab(text);
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1 };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             selector.DropDownStyle = ComboBoxStyle.DropDownList;
-            selector.Width = 420;
+            selector.Width = 200;
             FlowLayoutPanel selectors = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
             selectors.Controls.Add(selector);
+            if (selector == character)
+            {
+                partyButton.Name = "AddPartyMember"; partyButton.Text = "Add companion..."; partyButton.AutoSize = true;
+                partyButton.Click += delegate { ShowCompanions(); };
+                selectors.Controls.Add(partyButton);
+            }
             layout.Controls.Add(selectors, 0, 0);
             layout.Controls.Add(grid, 0, 1);
             page.Controls.Add(layout);
@@ -293,18 +344,29 @@ namespace SealSaveEditor
         {
             TabPage page = NewTab("Skills");
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1 };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 142));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            skillCharacter.Width = 400;
+            skillCharacter.Width = 300;
             skillCharacter.DropDownStyle = ComboBoxStyle.DropDownList;
-            layout.Controls.Add(skillCharacter, 0, 0);
+            var skillTools = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true };
+            skillTools.Controls.Add(skillCharacter); skillTools.SetFlowBreak(skillCharacter, true);
+            learnSkillsButton.Name = "LearnAllSkills"; learnSkillsButton.Text = "Learn class skills"; learnSkillsButton.AutoSize = true;
+            maxSkillsButton.Name = "MaxAllSkills"; maxSkillsButton.Text = "Max class skills"; maxSkillsButton.AutoSize = true;
+            skillBooksButton.Name = "OpenSkillBooks"; skillBooksButton.Text = "Skill books..."; skillBooksButton.AutoSize = true;
+            learnSkillsButton.Click += delegate { ApplyAllSkills(false); };
+            maxSkillsButton.Click += delegate { ApplyAllSkills(true); };
+            skillBooksButton.Click += delegate { ShowSkillBooks(this, skillCharacter.SelectedItem as CharacterRecord); };
+            skillTools.Controls.AddRange(new Control[] { learnSkillsButton, maxSkillsButton, skillBooksButton });
+            FitToolRow(skillTools, layout, 0, 85);
+            layout.Controls.Add(skillTools, 0, 0);
             SplitContainer split = new SplitContainer { Size = new Size(940, 550), Dock = DockStyle.Fill, SplitterDistance = 260, Panel1MinSize = 200, Panel2MinSize = 400 };
             skillTree.Dock = DockStyle.Fill;
             skillTree.HideSelection = false;
             skillTree.FullRowSelect = true;
             skillTree.ShowNodeToolTips = true;
             skillTree.BorderStyle = BorderStyle.None;
-            skillTree.ItemHeight = 30;
+            skillTree.ItemHeight = 34;
             split.Panel1.Controls.Add(skillTree);
             TableLayoutPanel details = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1 };
             details.RowStyles.Add(new RowStyle(SizeType.Absolute, 145));
@@ -326,13 +388,14 @@ namespace SealSaveEditor
         {
             TabPage page = NewTab("Items & equipment");
             TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 3, ColumnCount = 1 };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 45));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 98));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            FlowLayoutPanel filters = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false };
-            itemOwner.Width = 200;
+            FlowLayoutPanel filters = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = true };
+            itemOwner.Width = 150;
             itemOwner.DropDownStyle = ComboBoxStyle.DropDownList;
-            itemSearch.Width = 220;
+            itemSearch.Width = 160;
             itemSearch.AccessibleName = "Search items";
             itemCatalogButton.Text = "Item catalog...";
             itemCatalogButton.AutoSize = true;
@@ -340,7 +403,9 @@ namespace SealSaveEditor
             filters.Controls.Add(itemOwner);
             filters.Controls.Add(itemSearch);
             filters.Controls.Add(itemCatalogButton);
+            FitToolRow(filters, layout, 0, 52);
             TableLayoutPanel actions = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, ColumnCount = 1, Margin = Padding.Empty };
+            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             actions.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             FlowLayoutPanel itemActions = new FlowLayoutPanel { Dock = DockStyle.Fill, WrapContents = false, Margin = Padding.Empty };
@@ -349,7 +414,7 @@ namespace SealSaveEditor
             addItemButton.BackColor = Color.FromArgb(232, 190, 104);
             addItemButton.Click += delegate { AddNewItem(); };
             addModifierButton.Text = "Add modifier..."; addModifierButton.AutoSize = true;
-            removeModifierButton.Text = "Remove selected modifier"; removeModifierButton.AutoSize = true;
+            removeModifierButton.Text = "Remove modifier"; removeModifierButton.AutoSize = true;
             addModifierButton.Click += delegate { AddItemModifier(); };
             removeModifierButton.Click += delegate { RemoveItemModifier(); };
             replaceItemButton.Text = "Replace item..."; replaceItemButton.AutoSize = true;
@@ -570,6 +635,7 @@ namespace SealSaveEditor
             string label;
             if (grid != skillFields || selectedSkillView == null || !selectedSkillView.FieldLabels.TryGetValue(field.Key, out label)) label = FieldPresentation.Label(field, chinese);
             fieldInspector.Bind(field, label, SkillFieldDescription(grid, field), catalog, chinese, CanEdit(grid, field));
+            BindObjectIcon(grid);
             UpdateState();
             SetStatus(SkillFieldDescription(grid, field));
         }
@@ -634,7 +700,7 @@ namespace SealSaveEditor
                 {
                     if (redoing) change.RedoAction(); else change.UndoAction();
                     fieldInspector.Bind(null, "", "", catalog, chinese, false);
-                    BindItems();
+                    RefreshPartyViews();
                     RefreshRecords();
                 }
                 else change.Field.Text = redoing ? change.After : change.Before;
@@ -657,25 +723,30 @@ namespace SealSaveEditor
             if (preferred == null) preferred = character.SelectedItem as CharacterRecord ?? document.Characters[0];
             using (var dialog = new ItemTemplateBrowser(itemTemplates, chinese, ItemTemplateAction.Add, document.Characters, preferred))
             {
-                if (dialog.ShowDialog(this) != DialogResult.OK || dialog.InitialState == null || dialog.SelectedOwner == null) return;
-                TryAction(delegate
-                {
+                dialog.AddItemRequested = AddGeneratedItem;
+                dialog.SkillBooksRequested = ShowSkillBooks;
+                dialog.ShowDialog(this);
+            }
+        }
+
+        private void AddGeneratedItem(CharacterRecord recipient, ItemInitialState initialState)
+        {
+                    if (document == null || recipient == null || initialState == null || !document.Characters.Contains(recipient))
+                        throw new InvalidOperationException("Select a recipient from the current save.");
                     SaveDocument owner = document;
-                    ItemRecord added = owner.AddItem(dialog.SelectedOwner, dialog.InitialState);
+                    ItemRecord added = owner.AddItem(recipient, initialState);
                     AddedItemToken token = owner.CaptureAddedItem(added);
                     undo.Push(new FieldChange { UndoAction = delegate { owner.DetachAddedItem(token); }, RedoAction = delegate { owner.ReattachAddedItem(token); } });
                     redo.Clear(); fieldInspector.Bind(null, "", "", catalog, chinese, false);
                     bool previous = binding; binding = true; itemSearch.Clear(); activeItemQuery = "";
-                    itemOwner.SelectedIndex = itemOwner.Items.IndexOf(dialog.SelectedOwner.Name);
+                    itemOwner.SelectedIndex = itemOwner.Items.IndexOf(recipient.Name);
                     activeOwnerIndex = itemOwner.SelectedIndex; binding = previous;
                     BindItems();
                     foreach (ListViewItem row in items.Items) row.Selected = row.Tag == added;
                     activeItem = added; BindFields(itemFields, added.Fields); UpdateState();
                     RefreshRecords();
-                    SetStatus((chinese ? "已将新物品添加到 " : "Added the new item to ") + dialog.SelectedOwner.Name
+                    SetStatus((chinese ? "已将新物品添加到 " : "Added the new item to ") + recipient.Name
                         + (chinese ? " 的背包，保存后写入存档。" : "'s backpack. Save to write the slot."));
-                });
-            }
         }
 
         private void AddItemModifier()
@@ -832,9 +903,10 @@ namespace SealSaveEditor
             BindSkillValues();
         }
 
-        private static TreeNode BuildSkillNode(SkillView view, string selectedId, ref TreeNode restore)
+        private TreeNode BuildSkillNode(SkillView view, string selectedId, ref TreeNode restore)
         {
             TreeNode node = new TreeNode(view.Name) { Tag = view, ToolTipText = view.Role };
+            if (gameImages != null) node.ImageKey = node.SelectedImageKey = gameImages.Key(SkillIconId(view));
             if (view.Id == selectedId) restore = node;
             foreach (SkillView child in view.Children) node.Nodes.Add(BuildSkillNode(child, selectedId, ref restore));
             return node;
@@ -900,10 +972,14 @@ namespace SealSaveEditor
                 { "Export copy...", "导出修改副本…" }, { "Restore backup...", "恢复备份…" },
                 { "Readable data...", "导出数据说明…" }, { "Game folder...", "游戏目录…" },
                 { "Refresh slots", "刷新存档" }, { "Item catalog...", "物品图鉴…" },
+                { "Playthrough...", "周目与结局…" },
+                { "Game data TXT...", "游戏数据 TXT…" }, { "Add companion...", "添加队友…" },
+                { "Learn class skills", "一键学习本职业全部技能" }, { "Max class skills", "一键全部技能满级" },
+                { "Skill books...", "技能书／宝典…" },
                 { "Characters", "人物" }, { "Skills", "技能" }, { "Items & equipment", "背包与装备" },
                 { "Location", "地图与位置" }, { "Records", "高级数据" }, { "SAVE SLOTS", "存档列表" },
                 { "Undo", "撤销" }, { "Redo", "重做" }
-                , { "Add modifier...", "添加属性…" }, { "Remove selected modifier", "移除所选属性" }
+                , { "Add modifier...", "添加属性…" }, { "Remove modifier", "移除所选属性" }
                 , { "Replace item...", "替换物品…" }
                 , { "Add item...", "添加物品…" }
                 , { "Shortcuts", "快捷操作" }
@@ -937,6 +1013,7 @@ namespace SealSaveEditor
                     string searchNames = definition == null ? "" : definition.Name + " " + definition.ChineseName + " " + definition.OriginalName;
                     if (search.Length > 0 && (displayName + " " + searchNames + " " + item.Name + " " + item.Alias + " " + item.OwnerName).IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0) continue;
                     ListViewItem row = new ListViewItem(displayName);
+                    if (gameImages != null) row.ImageKey = gameImages.Key(ItemIconId(item));
                     if (definition != null) row.ToolTipText = definition.GetNameDescription(chinese);
                     row.SubItems.Add(item.OwnerName);
                     row.SubItems.Add(item.Alias);
@@ -952,6 +1029,8 @@ namespace SealSaveEditor
 
         private string DisplayItemName(ItemRecord item)
         {
+            ScriptBookDefinition book = scriptBooks == null ? null : scriptBooks.Find(item.Node.Path);
+            if (book != null) return book.GetDisplayName(chinese);
             if (catalog != null)
             {
                 ItemDefinition definition = catalog.FindItem(item.Alias);
@@ -1060,9 +1139,16 @@ namespace SealSaveEditor
         {
             catalog = null;
             itemTemplates = null;
+            scriptBooks = null;
+            items.SmallImageList = null; skillTree.ImageList = null;
+            if (gameImages != null) { gameImages.Dispose(); gameImages = null; }
             if (String.IsNullOrEmpty(gameDirectory)) return;
             try { catalog = GameCatalog.Load(gameDirectory); itemTemplates = ItemTemplateCatalog.Load(gameDirectory, catalog); }
             catch (Exception ex) { SetStatus("Game definitions: " + ex.Message); }
+            try { scriptBooks = ScriptItemCatalog.Load(gameDirectory); }
+            catch (Exception ex) { SetStatus("Skill books: " + ex.Message); }
+            try { gameImages = new GameIconImages(gameDirectory); items.SmallImageList = gameImages.Images; skillTree.ImageList = gameImages.Images; }
+            catch (Exception ex) { SetStatus("Game icons: " + ex.Message); }
         }
 
         private string SaveDirectory()
@@ -1242,7 +1328,23 @@ namespace SealSaveEditor
         private void ShowCatalog()
         {
             if (itemTemplates == null) { ShowError(chinese ? "请先选择游戏目录以读取原版物品模板。" : "Choose the game folder to read its original item templates."); return; }
-            using (var dialog = new ItemTemplateBrowser(itemTemplates, chinese, false)) dialog.ShowDialog(this);
+            using (var dialog = new ItemTemplateBrowser(itemTemplates, chinese, false))
+            { dialog.SkillBooksRequested = ShowSkillBooks; dialog.ShowDialog(this); }
+        }
+
+        private void ShowCampaign()
+        {
+            if (document == null || !ApplyInspectorDraft()) return;
+            using (var dialog = new CampaignDialog(delegate { return CampaignProgress.Read(document); }, delegate {
+                SaveDocument owner = document;
+                CampaignProgressSnapshot before = CampaignProgress.Capture(owner);
+                if (!CampaignProgress.EnableSecondPlaythrough(owner)) return;
+                CampaignProgressSnapshot after = CampaignProgress.Capture(owner);
+                undo.Push(new FieldChange { UndoAction = delegate { CampaignProgress.Restore(owner, before); }, RedoAction = delegate { CampaignProgress.Restore(owner, after); } });
+                redo.Clear(); fieldInspector.Bind(null, "", "", catalog, chinese, false);
+                RefreshFieldViews(); RefreshRecords(); UpdateState();
+                SetStatus(chinese ? "已启用此存档的二周目资格，保留当前剧情进度。保存后写入存档。" : "Second-playthrough eligibility enabled; current story progress retained. Save to write the slot.");
+            }, chinese)) dialog.ShowDialog(this);
         }
 
         private void UpdateState()
@@ -1252,6 +1354,11 @@ namespace SealSaveEditor
             undoButton.Enabled = undo.Count > 0 || fieldInspector.HasPending;
             redoButton.Enabled = redo.Count > 0;
             exportButton.Enabled = loaded;
+            campaignButton.Enabled = loaded;
+            dataButton.Enabled = !actorBusy && !String.IsNullOrEmpty(gameDirectory);
+            partyButton.Enabled = loaded && !actorBusy;
+            learnSkillsButton.Enabled = maxSkillsButton.Enabled = loaded && !actorBusy && catalog != null && scriptBooks != null;
+            skillBooksButton.Enabled = loaded && scriptBooks != null;
             itemCatalogButton.Enabled = itemTemplates != null;
             ItemRecord selectedItem = SelectedItem();
             addModifierButton.Enabled = loaded && selectedItem != null && catalog != null;

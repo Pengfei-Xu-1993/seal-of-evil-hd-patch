@@ -22,6 +22,7 @@ namespace SealSaveEditor
         private static readonly Color Gold = Color.FromArgb(232, 190, 104);
         private readonly FlowLayoutPanel content = new FlowLayoutPanel();
         private readonly Label heading = new Label();
+        private readonly PictureBox icon = new PictureBox { Size = new Size(64, 64), SizeMode = PictureBoxSizeMode.Zoom, Visible = false, BackColor = Color.Transparent };
         private readonly Label description = new Label();
         private readonly Label original = new Label();
         private readonly Label current = new Label();
@@ -103,7 +104,7 @@ namespace SealSaveEditor
             switchInput.AutoSize = true; switchInput.LinkColor = Color.FromArgb(126, 88, 30);
             switchInput.Margin = new Padding(0, 0, 0, 10);
             ConfigureLabel(state, false); state.Margin = new Padding(0, 10, 0, 0);
-            content.Controls.AddRange(new Control[] { heading, description, original, current, inputLabel, number, text, choice, switchInput, state });
+            content.Controls.AddRange(new Control[] { icon, heading, description, original, current, inputLabel, number, text, choice, switchInput, state });
             layout.Controls.Add(content, 0, 0);
             var actions = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Padding = new Padding(12, 10, 12, 12), Margin = Padding.Empty, BackColor = Paper };
             actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55)); actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
@@ -119,6 +120,13 @@ namespace SealSaveEditor
             switchInput.LinkClicked += delegate { ToggleTextInput(); };
             content.SizeChanged += delegate { FitWidths(); };
             Bind(null, "", "", null, true, false);
+            Disposed += delegate { if (icon.Image != null) { icon.Image.Dispose(); icon.Image = null; } };
+        }
+
+        public void SetIcon(Bitmap image)
+        {
+            Image previous = icon.Image; icon.Image = image; icon.Visible = image != null;
+            if (previous != null) previous.Dispose();
         }
 
         private void ConfigureLabel(Label label, bool title)
@@ -141,6 +149,7 @@ namespace SealSaveEditor
 
         public void Bind(SaveField field, string label, string explanation, GameCatalog gameCatalog, bool useChinese, bool editable)
         {
+            if (field == null) SetIcon(null);
             loading = true;
             try
             {

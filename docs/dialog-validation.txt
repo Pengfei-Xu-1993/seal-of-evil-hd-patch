@@ -1,0 +1,36 @@
+Fullscreen confirmation update - validation
+
+Production proxy SHA256:
+54A78C9003CF8B373EFCA9A5C6187E360060B3DBD9AD22E5D5D1B29F90DEAB74
+
+The original failure was reproduced in an isolated game installation. An owned
+Win32 overwrite confirmation had the correct owner and UI thread, but its game
+window became minimized. The fix intercepts the actual minimize request through
+a hook on that game's UI thread, before the minimize occurs. It applies only
+when borderless/virtual fullscreen is enabled, the game is disabled for a modal
+dialog, foreground is still the game, and a same-process, same-thread owned
+dialog exists. It does not automatically choose a confirmation result.
+
+Actual production-DLL checks:
+- Overwrite confirmation remains centered over the visible fullscreen game.
+- Cancel was clicked at the real native button's physical center. The dialog
+  was destroyed, the game was enabled, and all seven slot files were unchanged.
+- OK was clicked at the real native button's physical center. The dialog was
+  destroyed and the game's own save operation updated GAM, SCN and USE files.
+- A 25-second read-only window monitor covering Cancel recorded zero minimized
+  samples, no foreground departure from the game process, and a constant
+  3840x2160 physical display mode. Rendering was 1920x1080 for this test.
+- A second 25-second monitor covering OK also recorded no minimize or external
+  foreground transition. Real Alt+Tab left the game and returned normally.
+- The previous tooltip-canvas fix and resolution patch were preserved. New
+  source rebuilding with the bundled build.cmd succeeded using VS Build Tools.
+- Twenty-four native CBT/Win32 scope assertions passed. Earlier notification-
+  filtering candidates failed actual gameplay and are not the shipped code.
+
+The installer was tested in a separate owned fixture: exact new DLL, previous
+DLL backup, unchanged display configuration, updated HD uninstall metadata and
+an idempotent second run. No saved-game files are managed by this installer.
+The complete original HD installation and its third-party components remain
+required; this archive contains only the replacement proxy, installer and source.
+The tested English prompt still clips its final words in the small skinned
+dialog. This update preserves that layout and fixes the fullscreen transition.
